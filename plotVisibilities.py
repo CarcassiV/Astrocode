@@ -9,28 +9,26 @@ from scipy.special import jv
 #Are the squared visibilities corresponding to the correct wavelengths? How can I tell?
 #Is the angular diameter separate from the wavelength over the baseline? But the angular diameter is in the units of wavelength over baseline?
 #Why does the angular diameter in the summer school paper so much smaller than Korolik, when both are baseline/wavelength?
+def flatten(ndarr, rows, cols):
+    flatarr = []
+    for i in range(0,rows):
+        for j in range(0,cols):
+            flatarr.append(ndarr[i][j])
+    return flatarr
 
 oifitsobj = oifits.open('2011Dec07.17ms.sigGem.oifits')
-
 
 visibilities = []
 i = 0
 while i < np.size(oifitsobj.vis2):
-    j=0
-    while j < np.size(oifitsobj.vis2[i]):
-        visibilities.append(np.ma.getdata(oifitsobj.vis2[i].vis2data[j]))
-        j += 1
+    visibilities.append(np.ma.getdata(oifitsobj.vis2[i].vis2data))
     i += 1
 
-print(visibilities)
-"""
 visibilitiesError = []
 i = 0
 while i < np.size(oifitsobj.vis2):
     visibilitiesError.append(np.ma.getdata(oifitsobj.vis2[i].vis2err))
     i += 1
-
-print(visibilitiesError)
 
 closurePhases = []
 i = 0
@@ -75,15 +73,21 @@ theta = min(chiSquareValues, key=chiSquareValues.get) #assigns theta to the thet
 
 x = np.arange(10, 225, .5) #for the visibility squared curve
 
+flatVis = flatten(visibilities, 8, 8)
+flatErr = flatten(visibilitiesError, 8, 8)
+flatSpatial = flatten(spatialFrequency, 8, 8)
+flatClose = flatten(closurePhases, 5, 8)
+flatSpatialFive = flatten(spatialFrequencyFiveNights, 5, 8)
+
 fig, ax = plt.subplots(2,1, sharex=True)
-ax[0].plot(spatialFrequency, visibilities, '.')
+ax[0].plot(flatSpatial, flatVis, '.')
 ax[0].plot(x, ((2*jv(1, np.pi*theta*x))/(np.pi*theta*x))**2)
-ax[0].errorbar(spatialFrequency, visibilities, yerr=visibilitiesError)
+ax[0].errorbar(flatSpatial, flatVis, yerr=flatErr, fmt = '.')
 ax[0].set_ylabel('Visibilities Squared')
 ax[0].set_yscale('log', base=10)
 
-ax[1].plot(spatialFrequencyFiveNights, closurePhases, '.')
+ax[1].plot(flatSpatialFive, flatClose, '.')
 ax[1].set_xlabel('Spatial Frequency')
 ax[1].set_ylabel('Closure Phases')
 plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.01, hspace=.085)
-plt.show()"""
+plt.show()
