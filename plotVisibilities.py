@@ -48,30 +48,34 @@ while i < np.size(oifitsobj.vis2):
 #2.335 #milliarc seconds
 chiSquareValues = {}
 
-theta = 1.7*4.8481368110954e-9 #theta in radians
-thetaMax = 2.7*4.8481368110954e-9
-dtheta = 1e-11
+theta = 1.7*4.8481368110954e-3 #theta in radians
+thetaMax = 2.7*4.8481368110954e-3
+dtheta = 1e-6
 while theta <= thetaMax:
     chiSquare = 0
     i = 0
     while i < np.size(spatialFrequency,0):
         j = 0
         while j < np.size(spatialFrequency,1):
-            chiSquareValue = ((visibilities[i][j]-(((2*jv(1, np.pi*theta*spatialFrequency[i][j]))/(np.pi*theta*spatialFrequency[i][j]))**2))**2)/(((2*jv(1, np.pi*theta*spatialFrequency[i][j]))/(np.pi*theta*spatialFrequency[i][j]))**2)
+            O = visibilities[i][j]
+            E = (((2*jv(1, np.pi*theta*spatialFrequency[i][j]))/(np.pi*theta*spatialFrequency[i][j]))**2)
+            chiSquareValue = ((O-E)**2)/E
             if not np.isnan(chiSquareValue):
                 chiSquare += chiSquareValue
             j += 1
         i += 1
     #print(((visibilities[i-1][j-1]-(((2*jv(1, np.pi*theta*spatialFrequency[i-1][j-1]))/(np.pi*theta*spatialFrequency[i-1][j-1]))**2))**2)/(((2*jv(1, np.pi*theta*spatialFrequency[i-1][j-1]))/(np.pi*theta*spatialFrequency[i-1][j-1]))**2))
-    #print('Theta:', theta, ', Chi Squared Value:', chiSquare)
+    print('Theta:', theta, ', Chi Squared Value:', chiSquare)
     chiSquareValues.update({theta: chiSquare})
     theta += dtheta
 
-#print(chiSquareValues) #chi squared value = 0.00824177, the correct value of angular diameter gives .011320
-#print(min(chiSquareValues, key=chiSquareValues.get)/(4.8481368110954e-9)) #prints, in rad, the theta that produced the smallest chi squared value
+#print(chiSquareValues) 
+print(min(chiSquareValues, key=chiSquareValues.get)/(4.8481368110954e-3)) #prints, in microrad, the theta that produced the smallest chi squared value
 theta = min(chiSquareValues, key=chiSquareValues.get) #assigns theta to the theta that produced the smallest chi squared value
 
-x = np.arange(10, 225, .5) #for the visibility squared curve
+#theta = 2.335*0.004848137 #is the correct unit microradians?????
+
+x = np.arange(10, 225, .2) #for the visibility squared curve
 
 flatVis = flatten(visibilities, 8, 8)
 flatErr = flatten(visibilitiesError, 8, 8)
