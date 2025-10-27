@@ -45,10 +45,9 @@ while i < np.size(oifitsobj.vis2):
         spatialFrequencyFiveNights.append(np.sqrt((oifitsobj.vis2[i].ucoord)**2 + (oifitsobj.vis2[i].vcoord)**2)/oifitsobj.vis2[i].wavelength.eff_wave/1e6)
     i += 1 
 
-#2.335 #milliarc seconds
 chiSquareValues = {}
 
-theta = 1.7*4.8481368110954e-3 #theta in radians
+theta = 1.7*4.8481368110954e-3 #theta in microradians (is this the right unit?????)
 thetaMax = 2.7*4.8481368110954e-3
 dtheta = 1e-6
 while theta <= thetaMax:
@@ -58,13 +57,12 @@ while theta <= thetaMax:
         j = 0
         while j < np.size(spatialFrequency,1):
             O = visibilities[i][j]
-            E = (((2*jv(1, np.pi*theta*spatialFrequency[i][j]))/(np.pi*theta*spatialFrequency[i][j]))**2)
+            E = ((2*jv(1, np.pi*theta*spatialFrequency[i][j]))/(np.pi*theta*spatialFrequency[i][j]))**2
             chiSquareValue = ((O-E)**2)/E
             if not np.isnan(chiSquareValue):
                 chiSquare += chiSquareValue
             j += 1
         i += 1
-    #print(((visibilities[i-1][j-1]-(((2*jv(1, np.pi*theta*spatialFrequency[i-1][j-1]))/(np.pi*theta*spatialFrequency[i-1][j-1]))**2))**2)/(((2*jv(1, np.pi*theta*spatialFrequency[i-1][j-1]))/(np.pi*theta*spatialFrequency[i-1][j-1]))**2))
     print('Theta:', theta, ', Chi Squared Value:', chiSquare)
     chiSquareValues.update({theta: chiSquare})
     theta += dtheta
@@ -72,8 +70,7 @@ while theta <= thetaMax:
 #print(chiSquareValues) 
 print(min(chiSquareValues, key=chiSquareValues.get)/(4.8481368110954e-3)) #prints, in microrad, the theta that produced the smallest chi squared value
 theta = min(chiSquareValues, key=chiSquareValues.get) #assigns theta to the theta that produced the smallest chi squared value
-
-#theta = 2.335*0.004848137 #is the correct unit microradians?????
+#2.335 milliarc seconds should be the correct angular diameter
 
 x = np.arange(10, 225, .2) #for the visibility squared curve
 
@@ -88,7 +85,7 @@ ax[0].plot(flatSpatial, flatVis, '.')
 ax[0].plot(x, ((2*jv(1, np.pi*theta*x))/(np.pi*theta*x))**2)
 ax[0].errorbar(flatSpatial, flatVis, yerr=flatErr, fmt = '.')
 ax[0].set_ylabel('Visibilities Squared')
-ax[0].set_yscale('log', base=10)
+#ax[0].set_yscale('log', base=10)
 
 ax[1].plot(flatSpatialFive, flatClose, '.')
 ax[1].set_xlabel('Spatial Frequency')
