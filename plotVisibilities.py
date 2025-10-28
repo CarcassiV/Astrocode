@@ -2,6 +2,7 @@ import numpy as np
 import oifits
 import matplotlib.pyplot as plt
 from scipy.special import jv
+import random
 
 #To work on:
 #How do I access the closure phases array?
@@ -44,35 +45,37 @@ while i < np.size(oifitsobj.vis2):
     if(i<5):
         spatialFrequencyFiveNights.append(np.sqrt((oifitsobj.vis2[i].ucoord)**2 + (oifitsobj.vis2[i].vcoord)**2)/oifitsobj.vis2[i].wavelength.eff_wave/1e6)
     i += 1 
+#print(spatialFrequency)
+
 
 chiSquareValues = {}
 
-theta = 1.7*4.8481368110954e-3 #theta in microradians (is this the right unit?????)
-thetaMax = 2.7*4.8481368110954e-3
-dtheta = 1e-6
-while theta <= thetaMax:
+thetaMicroArcSeconds = np.arange(1.7, 2.7, 0.01)
+thetaRadians = thetaMicroArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))  #(1 arcsecs / 1000 millisecs)*(1 arcmin / 60 arcsecs)*(1 degree / 60 arcmin)*(pi radians / 180 degrees)
+#print(thetaRadians)
+"""while i < np.size(thetaRadians):
     chiSquare = 0
-    i = 0
-    while i < np.size(spatialFrequency,0):
-        j = 0
-        while j < np.size(spatialFrequency,1):
-            O = visibilities[i][j]
-            E = ((2*jv(1, np.pi*theta*spatialFrequency[i][j]))/(np.pi*theta*spatialFrequency[i][j]))**2
-            chiSquareValue = ((O-E)**2)/E
+    j = 0
+    while j < np.size(spatialFrequency,0):
+        k = 0
+        while k < np.size(spatialFrequency,1):
+            observed = visibilities[j][k]
+            expected = ((2*jv(1, np.pi*thetaRadians[i]*spatialFrequency[j][k]*1e6))/(np.pi*thetaRadians[i]*spatialFrequency[j][k]*1e6))**2
+            print(np.pi*thetaRadians[i]*spatialFrequency[j][k]*1e6)
+            chiSquareValue = ((observed-expected)**2)/expected
             if not np.isnan(chiSquareValue):
                 chiSquare += chiSquareValue
-            j += 1
-        i += 1
-    print('Theta:', theta, ', Chi Squared Value:', chiSquare)
-    chiSquareValues.update({theta: chiSquare})
-    theta += dtheta
+            k += 1
+        j += 1
+    #print('Theta:', thetaRadians[i], ', Chi Squared Value:', chiSquare)
+    chiSquareValues.update({thetaRadians[i]: chiSquare})
+    i+=1
 
 #print(chiSquareValues) 
-print(min(chiSquareValues, key=chiSquareValues.get)/(4.8481368110954e-3)) #prints, in microrad, the theta that produced the smallest chi squared value
+print(min(chiSquareValues, key=chiSquareValues.get)/((1/1000)*(1/60)*(1/60)*(np.pi/180))) 
 theta = min(chiSquareValues, key=chiSquareValues.get) #assigns theta to the theta that produced the smallest chi squared value
 #2.335 milliarc seconds should be the correct angular diameter
-
-x = np.arange(10, 225, .2) #for the visibility squared curve
+# = theta * 1e9"""
 
 flatVis = flatten(visibilities, 8, 8)
 flatErr = flatten(visibilitiesError, 8, 8)
@@ -80,9 +83,24 @@ flatSpatial = flatten(spatialFrequency, 8, 8)
 flatClose = flatten(closurePhases, 5, 8)
 flatSpatialFive = flatten(spatialFrequencyFiveNights, 5, 8)
 
+#for each visibility, randomly sample a point on the error bar
+sampleVisibilities = []
+for i in range(0, np.size(flatVis)):
+    randomVisibilitySample = random.uniform(flatVis[i]-flatErr[i], flatVis[i]+flatErr[i])
+    sampleVisibilities.append(randomVisibilitySample)
+
+#with these points, for each theta from 1.7milliarc second to 2.7 milliarc second, calculate the 
+#chi square value and find the optimal theta for that dataset
+#repeat 500 times
+#take the average of all the theta
+
+
+
+x = np.arange(10, 225, .2) #for the visibility squared curve
+
 fig, ax = plt.subplots(2,1, sharex=True)
 ax[0].plot(flatSpatial, flatVis, '.')
-ax[0].plot(x, ((2*jv(1, np.pi*theta*x))/(np.pi*theta*x))**2)
+#ax[0].plot(x, ((2*jv(1, np.pi*theta*x*1e6))/(np.pi*theta*x*1e6))**2)
 ax[0].errorbar(flatSpatial, flatVis, yerr=flatErr, fmt = '.')
 ax[0].set_ylabel('Visibilities Squared')
 #ax[0].set_yscale('log', base=10)
