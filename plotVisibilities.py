@@ -48,12 +48,12 @@ while i < np.size(oifitsobj.vis2):
 #print(spatialFrequency)
 
 
-chiSquareValues = {}
+"""chiSquareValues = {}
 
 thetaMicroArcSeconds = np.arange(1.7, 2.7, 0.01)
 thetaRadians = thetaMicroArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))  #(1 arcsecs / 1000 millisecs)*(1 arcmin / 60 arcsecs)*(1 degree / 60 arcmin)*(pi radians / 180 degrees)
 #print(thetaRadians)
-"""while i < np.size(thetaRadians):
+while i < np.size(thetaRadians):
     chiSquare = 0
     j = 0
     while j < np.size(spatialFrequency,0):
@@ -83,24 +83,53 @@ flatSpatial = flatten(spatialFrequency, 8, 8)
 flatClose = flatten(closurePhases, 5, 8)
 flatSpatialFive = flatten(spatialFrequencyFiveNights, 5, 8)
 
-#for each visibility, randomly sample a point on the error bar
-sampleVisibilities = []
-for i in range(0, np.size(flatVis)):
-    randomVisibilitySample = random.uniform(flatVis[i]-flatErr[i], flatVis[i]+flatErr[i])
-    sampleVisibilities.append(randomVisibilitySample)
 
-#with these points, for each theta from 1.7milliarc second to 2.7 milliarc second, calculate the 
-#chi square value and find the optimal theta for that dataset
+thetas = []
+#for each visibility, randomly sample a point on the error bar
+for i in range(0, 100):
+    sampleVisibilities = []
+    for i in range(0, np.size(flatVis)):
+        randomVisibilitySample = random.uniform(flatVis[i]-flatErr[i], flatVis[i]+flatErr[i])
+        sampleVisibilities.append(randomVisibilitySample)
+    #with these points, for each theta from 1.7milliarc second to 2.7 milliarc second, calculate the 
+    #chi square value and find the optimal theta for that dataset
+    chiSquareValues = {}
+
+    thetaMicroArcSeconds = np.arange(1.7, 2.7, 0.0001)
+    thetaRadians = thetaMicroArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))
+    i = 0
+    while i < np.size(thetaRadians):
+        chiSquare = 0
+        j = 0
+        while j < np.size(sampleVisibilities):
+            observed = sampleVisibilities[j]
+            expected = ((2*jv(1, np.pi*thetaRadians[i]*flatSpatial[j]*1e6))/(np.pi*thetaRadians[i]*flatSpatial[j]*1e6))**2
+            chiSquareValue = ((observed-expected)**2)/expected
+            if not np.isnan(chiSquareValue):
+                chiSquare += chiSquareValue
+            j += 1
+        #print('Theta:', thetaRadians[i], ', Chi Squared Value:', chiSquare)
+        chiSquareValues.update({thetaRadians[i]: chiSquare})
+        i+=1
+    thetas.append((min(chiSquareValues, key=chiSquareValues.get)))
+    print(min(chiSquareValues, key=chiSquareValues.get)/((1/1000)*(1/60)*(1/60)*(np.pi/180))) 
 #repeat 500 times
 #take the average of all the theta
-
-
+print("done")
+i = 0
+sum = 0
+while i < np.size(thetas):
+    sum += thetas[i]
+    i += 1
+theta = sum/np.size(thetas)
+print(theta)
 
 x = np.arange(10, 225, .2) #for the visibility squared curve
 
 fig, ax = plt.subplots(2,1, sharex=True)
+print("about to plot")
 ax[0].plot(flatSpatial, flatVis, '.')
-#ax[0].plot(x, ((2*jv(1, np.pi*theta*x*1e6))/(np.pi*theta*x*1e6))**2)
+ax[0].plot(x, ((2*jv(1, np.pi*theta*x*1e6))/(np.pi*theta*x*1e6))**2)
 ax[0].errorbar(flatSpatial, flatVis, yerr=flatErr, fmt = '.')
 ax[0].set_ylabel('Visibilities Squared')
 #ax[0].set_yscale('log', base=10)
