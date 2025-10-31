@@ -1,0 +1,20 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.special import jv
+
+angularDiameter = 2.335 #milliarcseconds
+
+
+
+# How to find the distance if you have the parallax angle
+# distance = (radius of the two places you're comparing the parallax from ie. earth at one point in the orbit and the opposite side) 
+#      / tan(parallax angle)
+# distance in parsecs = 1 / P, where P is the parallax angle in arc seconds
+
+# How to find the radius from the distance and angular diameter:
+# R = d tan (a/2), where R is the radius of the star in km, d is the distance to the star in km and a is the angular size of the
+#   star in arcseconds
+
+# How to calculate effective temperature with angular diameter and the bolometric flux
+# Teff = ((4Fbol)/(sigma*(thetaLD)^2))^(1/4), where sigma is the Stefan-Boltzmann constant
+# need to find the bolometric flux from another paper, units should be erg s^-1 cm^-2

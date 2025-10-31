@@ -123,6 +123,8 @@ while i < np.size(thetas):
     i += 1
 theta = sum/np.size(thetas)
 print(theta)
+#repeat the same process for the limb-darkened angular diameter?
+#okay idk how to use that equation...
 
 x = np.arange(10, 225, .2) #for the visibility squared curve
 
