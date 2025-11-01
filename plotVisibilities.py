@@ -95,8 +95,8 @@ for i in range(0, 100):
     #chi square value and find the optimal theta for that dataset
     chiSquareValues = {}
 
-    thetaMicroArcSeconds = np.arange(1.7, 2.7, 0.0001)
-    thetaRadians = thetaMicroArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))
+    thetaMilliArcSeconds = np.arange(1.7, 2.7, 0.0001)
+    thetaRadians = thetaMilliArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))
     i = 0
     while i < np.size(thetaRadians):
         chiSquare = 0
