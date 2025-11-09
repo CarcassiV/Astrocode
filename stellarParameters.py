@@ -2,6 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import jv
 
+def convertMilliArcSecToRadian(num):
+    return num*((1/1000)*(1/60)*(1/60)*(np.pi/180))
+
 angularDiameter = 2.335 #milliarcseconds
 
 
@@ -18,8 +21,9 @@ print(distance, 'parsecs')
 # R = d tan (a/2), where R is the radius of the star in km, d is the distance to the star in km and a is the angular size of the
 #   star in arcseconds
 distanceKm = 30856775812800*distance #distance in km
-radius = distanceKm * np.tan((angularDiameter*(1/1000))/2) #angular diameter needs to be in radians for python...
-print(radius, 'km')
+radiusKm = distanceKm * np.tan(convertMilliArcSecToRadian(angularDiameter)/2) #angular diameter needs to be in radians for python...
+radiusS = radiusKm*(1/695700) #convert to solar radii (1 solar radius/695700km)
+print(radiusS, 'solar radii')
 #radius should be 10.1 solar radii
 
 # How to calculate effective temperature with angular diameter and the bolometric flux

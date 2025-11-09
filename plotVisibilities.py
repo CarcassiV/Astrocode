@@ -2,6 +2,7 @@ import numpy as np
 import oifits
 import matplotlib.pyplot as plt
 from scipy.special import jv
+import scipy.integrate as integrate
 import random
 
 #To work on:
@@ -51,7 +52,6 @@ while i < np.size(oifitsobj.vis2):
     if(i<5):
         spatialFrequencyFiveNights.append(np.sqrt((oifitsobj.vis2[i].ucoord)**2 + (oifitsobj.vis2[i].vcoord)**2)/oifitsobj.vis2[i].wavelength.eff_wave/1e6)
     i += 1 
-print(spatialFrequency)
 
 oneDVis = flatten(visibilities, 8, 8)
 oneDVisErr = flatten(visibilitiesError, 8, 8)
@@ -59,14 +59,15 @@ oneDSpatial = flatten(spatialFrequency, 8, 8)
 oneDClose = flatten(closurePhases, 5, 8)
 oneDCloseErr = flatten(closurePhasesErrors, 5, 8)
 oneDSpatialFive = flatten(spatialFrequencyFiveNights, 5, 8)
-"""
+
+
 thetas = []
 #for each visibility, randomly sample a point on the error bar
 for i in range(0, 1000):
-    sampleVisibilities = []
+    sampleVisibilitiesSquared = []
     for i in range(0, np.size(oneDVis)):
-        randomVisibilitySample = random.uniform(oneDVis[i]-oneDVisErr[i], oneDVis[i]+oneDVisErr[i]) #should be normal distribution 
-        sampleVisibilities.append(randomVisibilitySample)
+        randomVisibilitySquaredSample = random.gauss(oneDVis[i], oneDVisErr[i]) #should be normal distribution 
+        sampleVisibilitiesSquared.append(randomVisibilitySquaredSample)
     #with these points, for each theta from 1.7milliarc second to 2.7 milliarc second, calculate the 
     #chi square value and find the optimal theta for that dataset
     chiSquareValues = {}
@@ -77,8 +78,8 @@ for i in range(0, 1000):
     while i < np.size(thetaRadians):
         chiSquare = 0
         j = 0
-        while j < np.size(sampleVisibilities):
-            observed = sampleVisibilities[j]
+        while j < np.size(sampleVisibilitiesSquared):
+            observed = sampleVisibilitiesSquared[j]
             expected = ((2*jv(1, np.pi*thetaRadians[i]*oneDSpatial[j]*1e6))/(np.pi*thetaRadians[i]*oneDSpatial[j]*1e6))**2
             chiSquareValue = ((observed-expected)**2)/expected
             if not np.isnan(chiSquareValue):
@@ -99,15 +100,38 @@ while i < np.size(thetas):
     i += 1
 theta = sum/np.size(thetas)
 print(theta)
-#repeat the same process for the limb-darkened angular diameter?
-#okay idk how to use that equation...
 
-#make a dictionary where each visibility will correspond with a certain spatial frequency
+#limb-darkened model angular diameter
+for i in range(0, 1000):
+    chiSquareValues = {}
+
+    sampleVisibilitiesSquared = []
+    for i in range(0, np.size(oneDVis)):
+        randomVisibilitySquaredSample = random.gauss(oneDVis[i], oneDVisErr[i]) #should be normal distribution 
+        sampleVisibilitiesSquared.append(randomVisibilitySquaredSample)
+
+    thetaMilliArcSeconds = np.arange(1.7, 2.7, 0.001)
+    thetaRadians = thetaMilliArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))
+    i = 0
+    while i < np.size(thetaRadians): 
+        j = 0
+        alpha = np.arrange(0, 1, 0.001)
+        while j < np.size(alpha):
+            k = 0
+            chiSquare = 0
+            while k < np.size(sampleVisibilitiesSquared):
+                observed = sampleVisibilitiesSquared[k]
+                function = (lambda r : ((1-r**2)**(alpha/2))*jv(0, r*oneDSpatial)*r)
+                expected = (alpha+2)(integrate.quad())
+
+
+
+#makes a dictionary where each visibility will correspond with a certain spatial frequency
 visDict = {}
 for i in range(0, np.size(oneDSpatial)):
     if not np.isnan(oneDVis[i]):
         visDict.update({oneDVis[i]:oneDSpatial[i]})
-
+"""
 thetas = []
 #for each visibility, randomly sample a point on the error bar
 for i in range(0, 1000):
@@ -150,7 +174,7 @@ while i < np.size(thetas):
 theta = sum/np.size(thetas)
 print(theta) """
 
-theta = 2.335*((1/1000)*(1/60)*(1/60)*(np.pi/180))
+#theta = 2.335*((1/1000)*(1/60)*(1/60)*(np.pi/180))
 
 x = np.arange(10, 225, .2) #for the visibility squared curve
 
@@ -160,11 +184,21 @@ ax[0].plot(oneDSpatial, oneDVis, '.')
 ax[0].plot(x, ((2*jv(1, np.pi*theta*x*1e6))/(np.pi*theta*x*1e6))**2)
 ax[0].errorbar(oneDSpatial, oneDVis, yerr=oneDVisErr, fmt = '.')
 ax[0].set_ylabel('Visibilities Squared')
-#ax[0].set_yscale('log', base=10)
+ax[0].set_yscale('log', base=10)
 
 ax[1].plot(oneDSpatialFive, oneDClose, '.')
 ax[1].errorbar(oneDSpatialFive, oneDClose, yerr=oneDCloseErr, fmt = '.')
 ax[1].set_xlabel('Spatial Frequency (Mλ)')
 ax[1].set_ylabel('Closure Phases (degrees)')
+
+mew = np.arange(0, 1, 0.01)
+limbDarkeningCoefficient = 0.6
+
+figTwo, axTwo = plt.subplots(1, 1)
+
+axTwo.plot(mew, mew**limbDarkeningCoefficient, ".")
+axTwo.set_xlabel('Mew (radians???)')
+axTwo.set_ylabel('Intensity (some kind of units...)')
+
 plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.01, hspace=.085)
 plt.show()
