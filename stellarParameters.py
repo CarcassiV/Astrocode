@@ -7,7 +7,6 @@ def convertMilliArcSecToRadian(num):
 
 angularDiameter = 2.335 #milliarcseconds
 
-
 # How to find the distance if you have the parallax angle
 # distance = (radius of the two places you're comparing the parallax from ie. earth at one point in the orbit and the opposite side) 
 #      / tan(parallax angle)
@@ -30,3 +29,5 @@ print(radiusS, 'solar radii')
 # Teff = ((4Fbol)/(sigma*(thetaLD)^2))^(1/4), where sigma is the Stefan-Boltzmann constant
 # need to find the bolometric flux from another paper, units should be erg s^-1 cm^-2
 # can't find this online...
+
+# 

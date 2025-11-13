@@ -5,12 +5,6 @@ from scipy.special import jv
 import scipy.integrate as integrate
 import random
 
-#To work on:
-#How do I access the closure phases array?
-#What is effective wavelength vs. wavelength?
-#Are the squared visibilities corresponding to the correct wavelengths? How can I tell?
-#Is the angular diameter separate from the wavelength over the baseline? But the angular diameter is in the units of wavelength over baseline?
-#Why does the angular diameter in the summer school paper so much smaller than Korolik, when both are baseline/wavelength?
 def flatten(ndarr, rows, cols):
     flatarr = []
     for i in range(0,rows):
@@ -18,96 +12,146 @@ def flatten(ndarr, rows, cols):
             flatarr.append(ndarr[i][j])
     return flatarr
 
+def uniformDiskFitErrorBar(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, numberOfTrials):
+    thetas = []
+    #for each visibility, randomly sample a point on the error bar
+    for i in range(0, numberOfTrials):
+        sampleVisibilitiesSquared = []
+        for i in range(0, np.size(visibilitiesSquared)):
+            randomVisibilitySquaredSample = random.gauss(visibilitiesSquared[i], visibilitiesSquaredErr[i]) #should be normal distribution 
+            sampleVisibilitiesSquared.append(randomVisibilitySquaredSample)
+        #with these points, for each theta from 1.7milliarc second to 2.7 milliarc second, calculate the 
+        #chi square value and find the optimal theta for that dataset
+        chiSquareValues = {}
+
+        thetaMilliArcSeconds = np.arange(1.7, 2.7, 0.0001)
+        thetaRadians = thetaMilliArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))
+        i = 0
+        while i < np.size(thetaRadians):
+            chiSquare = 0
+            j = 0
+            while j < np.size(sampleVisibilitiesSquared):
+                observed = sampleVisibilitiesSquared[j]
+                expected = ((2*jv(1, np.pi*thetaRadians[i]*spatialFrequencies[j]*1e6))/(np.pi*thetaRadians[i]*spatialFrequencies[j]*1e6))**2
+                chiSquareValue = ((observed-expected)**2)/expected
+                if not np.isnan(chiSquareValue):
+                    chiSquare += chiSquareValue
+                j += 1
+            #print('Theta:', thetaRadians[i], ', Chi Squared Value:', chiSquare)
+            chiSquareValues.update({thetaRadians[i]: chiSquare})
+            i+=1
+        thetas.append((min(chiSquareValues, key=chiSquareValues.get)))
+        print(min(chiSquareValues, key=chiSquareValues.get)/((1/1000)*(1/60)*(1/60)*(np.pi/180))) 
+    #repeat 500 times
+    #take the average of all the theta
+    print("done")
+    i = 0
+    sum = 0
+    while i < np.size(thetas):
+        sum += thetas[i]
+        i += 1
+    theta = sum/np.size(thetas)
+    print(theta)
+    return theta
+
+def uniformDiskFitBootstrap(visibilitiesSquared, spatialFrequencies, numberOfTrials):
+    #makes a dictionary where each visibility will correspond with a certain spatial frequency
+    visDict = {}
+    for i in range(0, np.size(spatialFrequencies)):
+        if not np.isnan(visibilitiesSquared[i]):
+            visDict.update({visibilitiesSquared[i]:spatialFrequencies[i]})
+
+    thetas = []
+    #for each visibility, randomly sample a point on the error bar
+    for i in range(0, numberOfTrials):
+        sampleVisibilities = []
+        for i in range(0, np.size(visibilitiesSquared)):
+            randomVisibilitySample = visibilitiesSquared[random.randint(0, np.size(visibilitiesSquared)-1)]
+            if not np.isnan(randomVisibilitySample):
+                sampleVisibilities.append(randomVisibilitySample)
+        #with these points, for each theta from 1.7milliarc second to 2.7 milliarc second, calculate the 
+        #chi square value and find the optimal theta for that dataset
+        chiSquareValues = {}
+
+        thetaMilliArcSeconds = np.arange(1.7, 2.7, 0.0001)
+        thetaRadians = thetaMilliArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))
+        i = 0
+        while i < np.size(thetaRadians):
+            chiSquare = 0
+            j = 0
+            while j < np.size(sampleVisibilities):
+                observed = sampleVisibilities[j]
+                expected = ((2*jv(1, np.pi*thetaRadians[i]*visDict.get(sampleVisibilities[j])*1e6))/(np.pi*thetaRadians[i]*visDict.get(sampleVisibilities[j])*1e6))**2
+                chiSquareValue = ((observed-expected)**2)/expected
+                if not np.isnan(chiSquareValue):
+                    chiSquare += chiSquareValue
+                j += 1
+            #print('Theta:', thetaRadians[i], ', Chi Squared Value:', chiSquare)
+            chiSquareValues.update({thetaRadians[i]: chiSquare})
+            i+=1
+        thetas.append((min(chiSquareValues, key=chiSquareValues.get)))
+        print(min(chiSquareValues, key=chiSquareValues.get)/((1/1000)*(1/60)*(1/60)*(np.pi/180))) 
+        #repeat number of trials amount of times
+    #take the average of all the theta
+    print("done")
+    i = 0
+    sum = 0
+    while i < np.size(thetas):
+        sum += thetas[i]
+        i += 1
+    theta = sum/np.size(thetas)
+    print(theta)
+
 oifitsobj = oifits.open('2011Dec07.17ms.sigGem.oifits')
 
-visibilities = []
+twoDVisibilities = []
 i = 0
 while i < np.size(oifitsobj.vis2):
-    visibilities.append(np.ma.getdata(oifitsobj.vis2[i].vis2data))
+    twoDVisibilities.append(np.ma.getdata(oifitsobj.vis2[i].vis2data))
     i += 1
 
-visibilitiesError = []
+twoDVisibilitiesError = []
 i = 0
 while i < np.size(oifitsobj.vis2):
-    visibilitiesError.append(np.ma.getdata(oifitsobj.vis2[i].vis2err))
+    twoDVisibilitiesError.append(np.ma.getdata(oifitsobj.vis2[i].vis2err))
     i += 1
 
-closurePhases = []
+twoDClosurePhases = []
 i = 0
 while i < np.size(oifitsobj.t3):
-    closurePhases.append(np.ma.getdata(oifitsobj.t3[i].t3phi))
+    twoDClosurePhases.append(np.ma.getdata(oifitsobj.t3[i].t3phi))
     i += 1
 
-closurePhasesErrors = []
+twoDClosurePhasesErrors = []
 i = 0
 while i < np.size(oifitsobj.t3):
-    closurePhasesErrors.append(np.ma.getdata(oifitsobj.t3[i].t3phierr))
+    twoDClosurePhasesErrors.append(np.ma.getdata(oifitsobj.t3[i].t3phierr))
     i += 1
 
-spatialFrequency = []
-spatialFrequencyFiveNights = []
+twoDSpatialFrequency = []
+twoDSpatialFrequencyFiveNights = []
 i = 0
 while i < np.size(oifitsobj.vis2):
-    spatialFrequency.append(np.sqrt((oifitsobj.vis2[i].ucoord)**2 + (oifitsobj.vis2[i].vcoord)**2)/oifitsobj.vis2[i].wavelength.eff_wave/1e6)
+    twoDSpatialFrequency.append(np.sqrt((oifitsobj.vis2[i].ucoord)**2 + (oifitsobj.vis2[i].vcoord)**2)/oifitsobj.vis2[i].wavelength.eff_wave/1e6)
     if(i<5):
-        spatialFrequencyFiveNights.append(np.sqrt((oifitsobj.vis2[i].ucoord)**2 + (oifitsobj.vis2[i].vcoord)**2)/oifitsobj.vis2[i].wavelength.eff_wave/1e6)
+        twoDSpatialFrequencyFiveNights.append(np.sqrt((oifitsobj.vis2[i].ucoord)**2 + (oifitsobj.vis2[i].vcoord)**2)/oifitsobj.vis2[i].wavelength.eff_wave/1e6)
     i += 1 
 
-oneDVis = flatten(visibilities, 8, 8)
-oneDVisErr = flatten(visibilitiesError, 8, 8)
-oneDSpatial = flatten(spatialFrequency, 8, 8)
-oneDClose = flatten(closurePhases, 5, 8)
-oneDCloseErr = flatten(closurePhasesErrors, 5, 8)
-oneDSpatialFive = flatten(spatialFrequencyFiveNights, 5, 8)
+visibilitiesSquared = flatten(twoDVisibilities, 8, 8)
+visibilitiesSquaredErr = flatten(twoDVisibilitiesError, 8, 8)
+spatialFrequencies = flatten(twoDSpatialFrequency, 8, 8)
+spatialFrequenciesFiveNights = flatten(twoDSpatialFrequencyFiveNights, 5, 8)
+closurePhases = flatten(twoDClosurePhases, 5, 8)
+closurePhasesErr = flatten(twoDClosurePhasesErrors, 5, 8)
 
-
-thetas = []
-#for each visibility, randomly sample a point on the error bar
-for i in range(0, 1000):
-    sampleVisibilitiesSquared = []
-    for i in range(0, np.size(oneDVis)):
-        randomVisibilitySquaredSample = random.gauss(oneDVis[i], oneDVisErr[i]) #should be normal distribution 
-        sampleVisibilitiesSquared.append(randomVisibilitySquaredSample)
-    #with these points, for each theta from 1.7milliarc second to 2.7 milliarc second, calculate the 
-    #chi square value and find the optimal theta for that dataset
-    chiSquareValues = {}
-
-    thetaMilliArcSeconds = np.arange(1.7, 2.7, 0.0001)
-    thetaRadians = thetaMilliArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))
-    i = 0
-    while i < np.size(thetaRadians):
-        chiSquare = 0
-        j = 0
-        while j < np.size(sampleVisibilitiesSquared):
-            observed = sampleVisibilitiesSquared[j]
-            expected = ((2*jv(1, np.pi*thetaRadians[i]*oneDSpatial[j]*1e6))/(np.pi*thetaRadians[i]*oneDSpatial[j]*1e6))**2
-            chiSquareValue = ((observed-expected)**2)/expected
-            if not np.isnan(chiSquareValue):
-                chiSquare += chiSquareValue
-            j += 1
-        #print('Theta:', thetaRadians[i], ', Chi Squared Value:', chiSquare)
-        chiSquareValues.update({thetaRadians[i]: chiSquare})
-        i+=1
-    thetas.append((min(chiSquareValues, key=chiSquareValues.get)))
-    print(min(chiSquareValues, key=chiSquareValues.get)/((1/1000)*(1/60)*(1/60)*(np.pi/180))) 
-#repeat 500 times
-#take the average of all the theta
-print("done")
-i = 0
-sum = 0
-while i < np.size(thetas):
-    sum += thetas[i]
-    i += 1
-theta = sum/np.size(thetas)
-print(theta)
 
 #limb-darkened model angular diameter
-for i in range(0, 1000):
+for i in range(0, 1):
     chiSquareValues = {}
 
     sampleVisibilitiesSquared = []
-    for i in range(0, np.size(oneDVis)):
-        randomVisibilitySquaredSample = random.gauss(oneDVis[i], oneDVisErr[i]) #should be normal distribution 
+    for i in range(0, np.size(visibilitiesSquared)):
+        randomVisibilitySquaredSample = random.gauss(visibilitiesSquared[i], visibilitiesSquaredErr[i]) #should be normal distribution 
         sampleVisibilitiesSquared.append(randomVisibilitySquaredSample)
 
     thetaMilliArcSeconds = np.arange(1.7, 2.7, 0.001)
@@ -115,79 +159,41 @@ for i in range(0, 1000):
     i = 0
     while i < np.size(thetaRadians): 
         j = 0
-        alpha = np.arrange(0, 1, 0.001)
+        alpha = np.arange(0, 1, 0.001)
+        print(alpha)
         while j < np.size(alpha):
             k = 0
             chiSquare = 0
+            alphaValuesForOneTheta = {}
             while k < np.size(sampleVisibilitiesSquared):
-                observed = sampleVisibilitiesSquared[k]
-                function = (lambda r : ((1-r**2)**(alpha/2))*jv(0, r*oneDSpatial)*r)
-                expected = (alpha+2)(integrate.quad())
-
-
-
-#makes a dictionary where each visibility will correspond with a certain spatial frequency
-visDict = {}
-for i in range(0, np.size(oneDSpatial)):
-    if not np.isnan(oneDVis[i]):
-        visDict.update({oneDVis[i]:oneDSpatial[i]})
-"""
-thetas = []
-#for each visibility, randomly sample a point on the error bar
-for i in range(0, 1000):
-    sampleVisibilities = []
-    for i in range(0, np.size(oneDVis)):
-        randomVisibilitySample = oneDVis[random.randint(0, np.size(oneDVis)-1)]
-        if not np.isnan(randomVisibilitySample):
-            sampleVisibilities.append(randomVisibilitySample)
-    #with these points, for each theta from 1.7milliarc second to 2.7 milliarc second, calculate the 
-    #chi square value and find the optimal theta for that dataset
-    chiSquareValues = {}
-
-    thetaMilliArcSeconds = np.arange(1.7, 2.7, 0.0001)
-    thetaRadians = thetaMilliArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))
-    i = 0
-    while i < np.size(thetaRadians):
-        chiSquare = 0
-        j = 0
-        while j < np.size(sampleVisibilities):
-            observed = sampleVisibilities[j]
-            expected = ((2*jv(1, np.pi*thetaRadians[i]*visDict.get(sampleVisibilities[j])*1e6))/(np.pi*thetaRadians[i]*visDict.get(sampleVisibilities[j])*1e6))**2
-            chiSquareValue = ((observed-expected)**2)/expected
-            if not np.isnan(chiSquareValue):
-                chiSquare += chiSquareValue
+                observed = np.sqrt(sampleVisibilitiesSquared[k])
+                function = lambda r : ((1-r**2)**(alpha[j]/2))*jv(0, np.pi*r*spatialFrequencies[k])*r
+                expected = (alpha[j]+2)*(integrate.quad(function, 0, 1)[0])
+                chiSquareValue = ((observed-expected)**2)/expected
+                if not np.isnan(chiSquareValue):
+                    chiSquare += chiSquareValue
+                k += 1
+            print("alpha value: ", alpha[j], "chisquare: ", chiSquare)
+            alphaValuesForOneTheta.update({alpha[j] : chiSquare})
             j += 1
-        #print('Theta:', thetaRadians[i], ', Chi Squared Value:', chiSquare)
-        chiSquareValues.update({thetaRadians[i]: chiSquare})
-        i+=1
-    thetas.append((min(chiSquareValues, key=chiSquareValues.get)))
-    print(min(chiSquareValues, key=chiSquareValues.get)/((1/1000)*(1/60)*(1/60)*(np.pi/180))) 
+        chiSquareValues({thetaRadians[i] : alphaValuesForOneTheta})
+        print(chiSquareValues)
+        i += 1
 
-#repeat 500 times
-#take the average of all the theta
-print("done")
-i = 0
-sum = 0
-while i < np.size(thetas):
-    sum += thetas[i]
-    i += 1
-theta = sum/np.size(thetas)
-print(theta) """
-
-#theta = 2.335*((1/1000)*(1/60)*(1/60)*(np.pi/180))
+theta = 2.335*((1/1000)*(1/60)*(1/60)*(np.pi/180))
 
 x = np.arange(10, 225, .2) #for the visibility squared curve
 
 fig, ax = plt.subplots(2,1, sharex=True)
 print("about to plot")
-ax[0].plot(oneDSpatial, oneDVis, '.')
+ax[0].plot(spatialFrequencies, visibilitiesSquared, '.')
 ax[0].plot(x, ((2*jv(1, np.pi*theta*x*1e6))/(np.pi*theta*x*1e6))**2)
-ax[0].errorbar(oneDSpatial, oneDVis, yerr=oneDVisErr, fmt = '.')
+ax[0].errorbar(spatialFrequencies, visibilitiesSquared, yerr=visibilitiesSquaredErr, fmt = '.')
 ax[0].set_ylabel('Visibilities Squared')
 ax[0].set_yscale('log', base=10)
 
-ax[1].plot(oneDSpatialFive, oneDClose, '.')
-ax[1].errorbar(oneDSpatialFive, oneDClose, yerr=oneDCloseErr, fmt = '.')
+ax[1].plot(spatialFrequenciesFiveNights, closurePhases, '.')
+ax[1].errorbar(spatialFrequenciesFiveNights, closurePhases, yerr=closurePhasesErr, fmt = '.')
 ax[1].set_xlabel('Spatial Frequency (Mλ)')
 ax[1].set_ylabel('Closure Phases (degrees)')
 
