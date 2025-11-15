@@ -4,6 +4,20 @@ import matplotlib.pyplot as plt
 from scipy.special import jv
 import scipy.integrate as integrate
 import random
+from dataclasses import dataclass
+from typing import Self
+
+@dataclass
+class chiSquaredTestResult:
+    angularDiameter: np.float64
+    alphaValues: np.float64
+    chiSquaredValue: np.float64
+
+    def compareTo(self, other: Self) -> Self:
+        if(other.chiSquaredValue < self.chiSquaredValue):
+            return other
+        else:
+            return self
 
 def flatten(ndarr, rows, cols):
     flatarr = []
@@ -144,7 +158,6 @@ spatialFrequenciesFiveNights = flatten(twoDSpatialFrequencyFiveNights, 5, 8)
 closurePhases = flatten(twoDClosurePhases, 5, 8)
 closurePhasesErr = flatten(twoDClosurePhasesErrors, 5, 8)
 
-
 #limb-darkened model angular diameter
 for i in range(0, 1):
     chiSquareValues = {}
@@ -154,12 +167,12 @@ for i in range(0, 1):
         randomVisibilitySquaredSample = random.gauss(visibilitiesSquared[i], visibilitiesSquaredErr[i]) #should be normal distribution 
         sampleVisibilitiesSquared.append(randomVisibilitySquaredSample)
 
-    thetaMilliArcSeconds = np.arange(1.7, 2.7, 0.001)
+    thetaMilliArcSeconds = np.arange(1.7, 2.7, 0.01)
     thetaRadians = thetaMilliArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))
     i = 0
     while i < np.size(thetaRadians): 
         j = 0
-        alpha = np.arange(0, 1, 0.001)
+        alpha = np.arange(0, 1, 0.01)
         print(alpha)
         while j < np.size(alpha):
             k = 0
@@ -168,7 +181,7 @@ for i in range(0, 1):
             while k < np.size(sampleVisibilitiesSquared):
                 observed = np.sqrt(sampleVisibilitiesSquared[k])
                 function = lambda r : ((1-r**2)**(alpha[j]/2))*jv(0, np.pi*r*spatialFrequencies[k])*r
-                expected = (alpha[j]+2)*(integrate.quad(function, 0, 1)[0])
+                expected = (alpha[j]+2)*np.abs((integrate.quad(function, 0, 1)[0]))
                 chiSquareValue = ((observed-expected)**2)/expected
                 if not np.isnan(chiSquareValue):
                     chiSquare += chiSquareValue
