@@ -51,7 +51,7 @@ print("Bolometrix Flux:", bolometricFluxM, "watts m^-2")
 effectiveTemperatures = []
 bolometricFluxCm = bolometricFluxM * (10000) #(1000cm^2/1m^2)
 stefanBoltzmannConstant = 5.670367e-8 #W m^−2 K^−4
-for i in range(0,100):
+for i in range(0,500):
     sampleAngularDiameter = random.gauss(angularDiameterRadians, angularDiameterErrRadians)
     effectiveTemperatures.append(((4*bolometricFluxCm)/(stefanBoltzmannConstant*(sampleAngularDiameter**2)))**(1/4))
 effectiveTemperature = sum(effectiveTemperatures) / len(effectiveTemperatures)
@@ -61,10 +61,14 @@ print("Effective Temperature:", effectiveTemperature, "K")
 # Mass = 1.28 ± 0.07 solar masses (Roettenbacher et al. 2015)
 massSolarMass = 1.28 
 massSolarMassErr = .07
-massKg = 1.28 * 1.98847E+30 #1.98847E+30kg in one solar mass
-massKgErr = .07 * 1.98847E+30
+massKg = 1.28 * 1.98847e30 #1.98847E+30kg in one solar mass
+massKgErr = .07 * 1.98847e30
+gravitationalConstant = 6.67408e-11 #m3 kg^-1 s^-2
 
 surfaceGravities = []
-for i in range(0, 100):
+for i in range(0, 500):
     sampleMass = random.gauss(massKg, massKgErr)
-    surfaceGravities.append()
+    surfaceGravities.append((gravitationalConstant*sampleMass)/(radiusM**2))
+surfaceGravityM = sum(surfaceGravities) / len(surfaceGravities)
+surfaceGravityCm = surfaceGravityM * (100)
+print("Surface Gravity log(g):", np.log(surfaceGravityCm), "cm s^-2")
