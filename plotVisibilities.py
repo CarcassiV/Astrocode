@@ -158,7 +158,7 @@ spatialFrequenciesFiveNights = flatten(twoDSpatialFrequencyFiveNights, 5, 8)
 closurePhases = flatten(twoDClosurePhases, 5, 8)
 closurePhasesErr = flatten(twoDClosurePhasesErrors, 5, 8)
 
-#limb-darkened model angular diameter
+"""#limb-darkened model angular diameter
 for i in range(0, 1):
     chiSquareValues = {}
 
@@ -191,7 +191,7 @@ for i in range(0, 1):
             j += 1
         chiSquareValues({thetaRadians[i] : alphaValuesForOneTheta})
         print(chiSquareValues)
-        i += 1
+        i += 1"""
 
 theta = 2.335*((1/1000)*(1/60)*(1/60)*(np.pi/180))
 
@@ -210,14 +210,19 @@ ax[1].errorbar(spatialFrequenciesFiveNights, closurePhases, yerr=closurePhasesEr
 ax[1].set_xlabel('Spatial Frequency (Mλ)')
 ax[1].set_ylabel('Closure Phases (degrees)')
 
-mew = np.arange(0, 1, 0.01)
-limbDarkeningCoefficient = 0.6
+mew = np.arange(0, 1, .0001)
+r = np.arange(0, 1, 0.0001)
+limbDarkeningCoefficient = [0, 0.2, 0.5, 1, 1.5, 3, 7]
 
-figTwo, axTwo = plt.subplots(1, 1)
+figTwo, axTwo = plt.subplots(2, 1)
 
-axTwo.plot(mew, mew**limbDarkeningCoefficient, ".")
-axTwo.set_xlabel('Mew (radians???)')
-axTwo.set_ylabel('Intensity (some kind of units...)')
+for i in range(0, np.size(limbDarkeningCoefficient)):
+    axTwo[0].plot(mew, mew**limbDarkeningCoefficient[i])
+    axTwo[1].plot(r, (1-r**2)**(limbDarkeningCoefficient[i]/2))
+axTwo[0].set_xlabel('μ')
+axTwo[1].set_xlabel('r')
+axTwo[0].set_ylabel('Intensity, I(r)')
+axTwo[1].set_ylabel('Intensity, I(r)')
 
 plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.01, hspace=.085)
 plt.show()
