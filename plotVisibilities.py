@@ -8,13 +8,13 @@ from dataclasses import dataclass
 from typing import Self
 
 @dataclass
-class chiSquaredTestResult:
+class chiSquareTestResult:
     angularDiameter: np.float64
     alphaValues: np.float64
-    chiSquaredValue: np.float64
+    chiSquare: np.float64
 
     def compareTo(self, other: Self) -> Self:
-        if(other.chiSquaredValue < self.chiSquaredValue):
+        if(other.chiSquare < self.chiSquare):
             return other
         else:
             return self
@@ -158,40 +158,46 @@ spatialFrequenciesFiveNights = flatten(twoDSpatialFrequencyFiveNights, 5, 8)
 closurePhases = flatten(twoDClosurePhases, 5, 8)
 closurePhasesErr = flatten(twoDClosurePhasesErrors, 5, 8)
 
-"""#limb-darkened model angular diameter
-for i in range(0, 1):
-    chiSquareValues = {}
-
+chiSquareTestValues = []
+minChiSquareTestResultForATheta = chiSquareTestResult(0,0,1e30)
+#limb-darkened model angular diameter
+for a in range(0, 1):
     sampleVisibilitiesSquared = []
     for i in range(0, np.size(visibilitiesSquared)):
         randomVisibilitySquaredSample = random.gauss(visibilitiesSquared[i], visibilitiesSquaredErr[i]) #should be normal distribution 
         sampleVisibilitiesSquared.append(randomVisibilitySquaredSample)
-
+    sampleVisibilities = np.sqrt(sampleVisibilitiesSquared)
+    
     thetaMilliArcSeconds = np.arange(1.7, 2.7, 0.01)
     thetaRadians = thetaMilliArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))
     i = 0
     while i < np.size(thetaRadians): 
         j = 0
         alpha = np.arange(0, 1, 0.01)
-        print(alpha)
         while j < np.size(alpha):
             k = 0
             chiSquare = 0
             alphaValuesForOneTheta = {}
-            while k < np.size(sampleVisibilitiesSquared):
-                observed = np.sqrt(sampleVisibilitiesSquared[k])
-                function = lambda r : ((1-r**2)**(alpha[j]/2))*jv(0, np.pi*r*spatialFrequencies[k])*r
-                expected = (alpha[j]+2)*np.abs((integrate.quad(function, 0, 1)[0]))
+            while k < np.size(sampleVisibilities):
+                observed = np.sqrt(sampleVisibilities[k])
+                #print(observed)
+                function = lambda r : ((1-r**2)**(alpha[j]/2))*jv(0, np.pi*thetaRadians[i]*r*spatialFrequencies[k])*r
+                integral, err = integrate.quad(function, 0, 1)
+                expected = (alpha[j]+2)*np.abs(integral)
                 chiSquareValue = ((observed-expected)**2)/expected
                 if not np.isnan(chiSquareValue):
                     chiSquare += chiSquareValue
                 k += 1
-            print("alpha value: ", alpha[j], "chisquare: ", chiSquare)
-            alphaValuesForOneTheta.update({alpha[j] : chiSquare})
+            #print("Theta value:", thetaRadians[i], "alpha value:", alpha[j], "chisquare:", chiSquare)
+            if j == 0 or chiSquare < minChiSquareTestResultForATheta.chiSquare: #the less than comparison isnt currently working properly it seems
+                minChiSquareTestResultForATheta = chiSquareTestResult(thetaRadians[i], alpha[j], chiSquare)
             j += 1
-        chiSquareValues({thetaRadians[i] : alphaValuesForOneTheta})
-        print(chiSquareValues)
-        i += 1"""
+        print(minChiSquareTestResultForATheta)
+        chiSquareTestValues.append(minChiSquareTestResultForATheta)
+        i += 1
+    a+=1
+#while i < np.size(chiSquareTestValues):
+
 
 theta = 2.335*((1/1000)*(1/60)*(1/60)*(np.pi/180))
 

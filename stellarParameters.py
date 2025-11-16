@@ -63,7 +63,7 @@ massSolarMass = 1.28
 massSolarMassErr = .07
 massKg = 1.28 * 1.98847e30 #1.98847E+30kg in one solar mass
 massKgErr = .07 * 1.98847e30
-gravitationalConstant = 6.67408e-11 #m3 kg^-1 s^-2
+gravitationalConstant = 6.67408e-11 #m^3 kg^-1 s^-2
 
 surfaceGravities = []
 for i in range(0, 500):
