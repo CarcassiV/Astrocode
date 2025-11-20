@@ -10,7 +10,7 @@ from typing import Self
 @dataclass
 class chiSquareTestResult:
     angularDiameter: np.float64
-    alphaValues: np.float64
+    alpha: np.float64
     chiSquare: np.float64
 
     def compareTo(self, other: Self) -> Self:
@@ -159,47 +159,65 @@ closurePhases = flatten(twoDClosurePhases, 5, 8)
 closurePhasesErr = flatten(twoDClosurePhasesErrors, 5, 8)
 
 chiSquareTestValues = []
-minChiSquareTestResultForATheta = chiSquareTestResult(0,0,1e30)
+minChiSquareTestResultForATheta = chiSquareTestResult(0,.5,1e30)
 #limb-darkened model angular diameter
-for a in range(0, 1):
+for a in range(0, 10):
     sampleVisibilitiesSquared = []
     for i in range(0, np.size(visibilitiesSquared)):
         randomVisibilitySquaredSample = random.gauss(visibilitiesSquared[i], visibilitiesSquaredErr[i]) #should be normal distribution 
         sampleVisibilitiesSquared.append(randomVisibilitySquaredSample)
     sampleVisibilities = np.sqrt(sampleVisibilitiesSquared)
     
-    thetaMilliArcSeconds = np.arange(1.7, 2.7, 0.01)
+    thetaMilliArcSeconds = np.arange(2.0, 2.5, 0.01)
     thetaRadians = thetaMilliArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))
     i = 0
     while i < np.size(thetaRadians): 
         j = 0
+        minChiSquareTestResultForATheta = chiSquareTestResult(0,.5,1e30)
         alpha = np.arange(0, 1, 0.01)
         while j < np.size(alpha):
             k = 0
             chiSquare = 0
             alphaValuesForOneTheta = {}
             while k < np.size(sampleVisibilities):
-                observed = np.sqrt(sampleVisibilities[k])
-                #print(observed)
-                function = lambda r : ((1-r**2)**(alpha[j]/2))*jv(0, np.pi*thetaRadians[i]*r*spatialFrequencies[k])*r
-                integral, err = integrate.quad(function, 0, 1)
+                observed = sampleVisibilities[k]
+                #print(alpha[j])
+                function = lambda r : ((1-r**2)**(alpha[j]/2))*jv(0, np.pi*thetaRadians[i]*r*spatialFrequencies[k]*1e6)*r
+                integral, err = integrate.quad(function, 0, 1, epsabs=1e-14)
                 expected = (alpha[j]+2)*np.abs(integral)
+                #if(alpha[j] == 0 and k == 1):
+                    #print(sampleVisibilities[k], spatialFrequencies[k], thetaRadians[i])
+                    #print(expected)
                 chiSquareValue = ((observed-expected)**2)/expected
                 if not np.isnan(chiSquareValue):
                     chiSquare += chiSquareValue
                 k += 1
+            #print(chiSquare)
             #print("Theta value:", thetaRadians[i], "alpha value:", alpha[j], "chisquare:", chiSquare)
-            if j == 0 or chiSquare < minChiSquareTestResultForATheta.chiSquare: #the less than comparison isnt currently working properly it seems
+            if (chiSquare < minChiSquareTestResultForATheta.chiSquare): #the less than comparison isnt currently working properly it seems
                 minChiSquareTestResultForATheta = chiSquareTestResult(thetaRadians[i], alpha[j], chiSquare)
+                #print(minChiSquareTestResultForATheta)
+                #print('switched value')
             j += 1
         print(minChiSquareTestResultForATheta)
         chiSquareTestValues.append(minChiSquareTestResultForATheta)
         i += 1
     a+=1
-#while i < np.size(chiSquareTestValues):
-
+print('done')
+i=0
+min = chiSquareTestResult(0,0,1e30)
+while i < np.size(chiSquareTestValues):
+    if chiSquareTestValues[i].chiSquare < min.chiSquare:
+        min = chiSquareTestValues[i]
+        print('computing')
+    i += 1
+print(min)
+theta = min.angularDiameter
+alpha = min.alpha
 
 theta = 2.335*((1/1000)*(1/60)*(1/60)*(np.pi/180))
+limbDarkenedTheta = 2.417*((1/1000)*(1/60)*(1/60)*(np.pi/180))
+alpha = 0.14
 
 x = np.arange(10, 225, .2) #for the visibility squared curve
 
@@ -210,6 +228,16 @@ ax[0].plot(x, ((2*jv(1, np.pi*theta*x*1e6))/(np.pi*theta*x*1e6))**2)
 ax[0].errorbar(spatialFrequencies, visibilitiesSquared, yerr=visibilitiesSquaredErr, fmt = '.')
 ax[0].set_ylabel('Visibilities Squared')
 ax[0].set_yscale('log', base=10)
+
+limbDarkenedValues = []
+i = 0
+while i < np.size(x):
+    function = lambda r : ((1-r**2)**(alpha/2))*jv(0, np.pi*limbDarkenedTheta*r*x[i]*1e6)*r
+    integral, err = integrate.quad(function, 0, 1, epsabs=1e-14)
+    limbDarkenedValues.append((alpha+2)*np.abs(integral))
+    i+=1
+
+ax[0].plot(x, limbDarkenedValues)
 
 ax[1].plot(spatialFrequenciesFiveNights, closurePhases, '.')
 ax[1].errorbar(spatialFrequenciesFiveNights, closurePhases, yerr=closurePhasesErr, fmt = '.')

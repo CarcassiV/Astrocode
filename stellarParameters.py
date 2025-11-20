@@ -35,25 +35,27 @@ print("Radius:", radiusS, 'solar radii')
 
 # How to calculate effective temperature with angular diameter and the bolometric flux
 # Teff = ((4Fbol)/(sigma*(thetaLD)^2))^(1/4), where sigma is the Stefan-Boltzmann constant
-# L = 4piR^2Fbol, L/(4piR^2)=Fbol
+# L = 4piR^2Fbol, Fbol=L/(4piR^2)
 # L = 39 ± 2 (Roettenbacher et al. 2015)
 luminosity = 39 # watts
 luminosityErr = 2
+radiusKm = 10.1 * 695700
 radiusM = radiusKm * (1000)
+radiusCm = radiusM * (100)
 
 bolometricFluxes = []
 for i in range(0, 100): #will have to account for the error in radius but didn't invest enough skill points into stats yet
     sampleLuminosity = random.gauss(luminosity, luminosityErr)
-    bolometricFluxes.append(sampleLuminosity / (4*np.pi*radiusM**2))
-bolometricFluxM = sum(bolometricFluxes) / len(bolometricFluxes)
-print("Bolometrix Flux:", bolometricFluxM, "watts m^-2")
+    bolometricFluxes.append(sampleLuminosity / (4*np.pi*radiusCm**2))
+bolometricFluxCm = sum(bolometricFluxes) / len(bolometricFluxes)
+print("Bolometrix Flux:", bolometricFluxCm, "watts cm^-2")
 
 effectiveTemperatures = []
-bolometricFluxCm = bolometricFluxM * (10000) #(1000cm^2/1m^2)
-stefanBoltzmannConstant = 5.670367e-8 #W m^−2 K^−4
+
+stefanBoltzmannConstant = 5.670374419e-5 #erg cm−2 s−1 K−4
 for i in range(0,500):
     sampleAngularDiameter = random.gauss(angularDiameterRadians, angularDiameterErrRadians)
-    effectiveTemperatures.append(((4*bolometricFluxCm)/(stefanBoltzmannConstant*(sampleAngularDiameter**2)))**(1/4))
+    effectiveTemperatures.append(((4*bolometricFluxCm*1e16)/(stefanBoltzmannConstant*(sampleAngularDiameter**2)))**(1/4))
 effectiveTemperature = sum(effectiveTemperatures) / len(effectiveTemperatures)
 print("Effective Temperature:", effectiveTemperature, "K")
 
