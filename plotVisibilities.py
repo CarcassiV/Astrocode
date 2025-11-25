@@ -166,15 +166,15 @@ for a in range(0, 10):
     for i in range(0, np.size(visibilitiesSquared)):
         randomVisibilitySquaredSample = random.gauss(visibilitiesSquared[i], visibilitiesSquaredErr[i]) #should be normal distribution 
         sampleVisibilitiesSquared.append(randomVisibilitySquaredSample)
-    sampleVisibilities = np.sqrt(sampleVisibilitiesSquared)
+    sampleVisibilities = sampleVisibilitiesSquared
     
-    thetaMilliArcSeconds = np.arange(2.0, 2.5, 0.01)
+    thetaMilliArcSeconds = np.arange(2.2, 2.45, 0.01)
     thetaRadians = thetaMilliArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))
     i = 0
     while i < np.size(thetaRadians): 
         j = 0
         minChiSquareTestResultForATheta = chiSquareTestResult(0,.5,1e30)
-        alpha = np.arange(0, 1, 0.01)
+        alpha = np.arange(0, .4, 0.01)
         while j < np.size(alpha):
             k = 0
             chiSquare = 0
@@ -184,7 +184,7 @@ for a in range(0, 10):
                 #print(alpha[j])
                 function = lambda r : ((1-r**2)**(alpha[j]/2))*jv(0, np.pi*thetaRadians[i]*r*spatialFrequencies[k]*1e6)*r
                 integral, err = integrate.quad(function, 0, 1, epsabs=1e-14)
-                expected = (alpha[j]+2)*np.abs(integral)
+                expected = ((alpha[j]+2)*integral)**2
                 #if(alpha[j] == 0 and k == 1):
                     #print(sampleVisibilities[k], spatialFrequencies[k], thetaRadians[i])
                     #print(expected)
@@ -193,7 +193,7 @@ for a in range(0, 10):
                     chiSquare += chiSquareValue
                 k += 1
             #print(chiSquare)
-            #print("Theta value:", thetaRadians[i], "alpha value:", alpha[j], "chisquare:", chiSquare)
+            print("Theta value:", thetaRadians[i], "alpha value:", alpha[j], "chisquare:", chiSquare)
             if (chiSquare < minChiSquareTestResultForATheta.chiSquare): #the less than comparison isnt currently working properly it seems
                 minChiSquareTestResultForATheta = chiSquareTestResult(thetaRadians[i], alpha[j], chiSquare)
                 #print(minChiSquareTestResultForATheta)
@@ -216,8 +216,8 @@ theta = min.angularDiameter
 alpha = min.alpha
 
 theta = 2.335*((1/1000)*(1/60)*(1/60)*(np.pi/180))
-limbDarkenedTheta = 2.417*((1/1000)*(1/60)*(1/60)*(np.pi/180))
-alpha = 0.14
+limbDarkenedTheta = 2.4*((1/1000)*(1/60)*(1/60)*(np.pi/180))
+alpha = 0.25
 
 x = np.arange(10, 225, .2) #for the visibility squared curve
 

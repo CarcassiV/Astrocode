@@ -6,7 +6,7 @@ import random
 def convertMilliArcSecToRadian(num):
     return num*((1/1000)*(1/60)*(1/60)*(np.pi/180))
 
-angularDiameter = 2.335 #milliarcseconds
+angularDiameter = 2.425 #milliarcseconds
 angularDiameterErr = .007 #milliarcSeconds
 angularDiameterRadians = convertMilliArcSecToRadian(angularDiameter)
 angularDiameterErrRadians = convertMilliArcSecToRadian(angularDiameterErr)
@@ -19,6 +19,7 @@ angularDiameterErrRadians = convertMilliArcSecToRadian(angularDiameterErr)
 # The parallex of σ GEMINORUM is 27.121043168963787 milliarcseconds according to Gaia data
 distance = (1 / ((27.121043168963787)*(1/1000))) #distance from earth in parsecs
 print("Distance from Earth:", distance, 'parsecs')
+distance = 38.8
 
 # How to find the radius from the distance and angular diameter:
 # R = d tan (a/2), where R is the radius of the star in km, d is the distance to the star in km and a is the angular size of the
@@ -37,27 +38,36 @@ print("Radius:", radiusS, 'solar radii')
 # Teff = ((4Fbol)/(sigma*(thetaLD)^2))^(1/4), where sigma is the Stefan-Boltzmann constant
 # L = 4piR^2Fbol, Fbol=L/(4piR^2)
 # L = 39 ± 2 (Roettenbacher et al. 2015)
-luminosity = 39 # watts
-luminosityErr = 2
+LSun = 3.828e26 # watts
+luminosity = 39 * LSun # watts
+luminosityErr = 2 * LSun
 radiusKm = 10.1 * 695700
 radiusM = radiusKm * (1000)
 radiusCm = radiusM * (100)
+stefanBoltzmannConstant = 5.670374419e-8 #erg m−2 s−1 K−4
 
 bolometricFluxes = []
-for i in range(0, 100): #will have to account for the error in radius but didn't invest enough skill points into stats yet
+for i in range(0, 500): #will have to account for the error in radius but didn't invest enough skill points into stats yet
     sampleLuminosity = random.gauss(luminosity, luminosityErr)
-    bolometricFluxes.append(sampleLuminosity / (4*np.pi*radiusCm**2))
-bolometricFluxCm = sum(bolometricFluxes) / len(bolometricFluxes)
-print("Bolometrix Flux:", bolometricFluxCm, "watts cm^-2")
+    bolometricFluxes.append(sampleLuminosity / (4*np.pi*radiusM**2))
+bolometricFluxM = sum(bolometricFluxes) / len(bolometricFluxes)
+print("Bolometrix Flux:", bolometricFluxM, "watts m^-2")
 
 effectiveTemperatures = []
 
-stefanBoltzmannConstant = 5.670374419e-5 #erg cm−2 s−1 K−4
 for i in range(0,500):
-    sampleAngularDiameter = random.gauss(angularDiameterRadians, angularDiameterErrRadians)
-    effectiveTemperatures.append(((4*bolometricFluxCm*1e16)/(stefanBoltzmannConstant*(sampleAngularDiameter**2)))**(1/4))
+    sampleAngularDiameter = random.gauss(angularDiameter, angularDiameterErr)
+    effectiveTemperatures.append(((4*bolometricFluxM)/(stefanBoltzmannConstant*(sampleAngularDiameter**2)))**(1/4))
 effectiveTemperature = sum(effectiveTemperatures) / len(effectiveTemperatures)
 print("Effective Temperature:", effectiveTemperature, "K")
+
+effectiveTemperatures = []
+
+"""for i in range(0,500):
+    sampleLuminosity = random.gauss(luminosity, luminosityErr)
+    effectiveTemperatures.append(((sampleLuminosity)/(4*np.pi*stefanBoltzmannConstant*(radiusM**2)))**(1/4))
+effectiveTemperature = sum(effectiveTemperatures) / len(effectiveTemperatures)
+print("Effective Temperature:", effectiveTemperature, "K")"""
 
 # surface gravity = G*M/R^2, where G is the gravitational constant, M is the mass of the star in Kg and R is the radius of the star in Km
 # Mass = 1.28 ± 0.07 solar masses (Roettenbacher et al. 2015)
@@ -65,12 +75,12 @@ massSolarMass = 1.28
 massSolarMassErr = .07
 massKg = 1.28 * 1.98847e30 #1.98847E+30kg in one solar mass
 massKgErr = .07 * 1.98847e30
-gravitationalConstant = 6.67408e-11 #m^3 kg^-1 s^-2
+gravitationalConstant = 6.67408e-11 * 100**3 #m^3 kg^-1 s^-2
 
 surfaceGravities = []
 for i in range(0, 500):
     sampleMass = random.gauss(massKg, massKgErr)
-    surfaceGravities.append((gravitationalConstant*sampleMass)/(radiusM**2))
+    surfaceGravities.append((gravitationalConstant*sampleMass)/(radiusCm**2))
 surfaceGravityM = sum(surfaceGravities) / len(surfaceGravities)
-surfaceGravityCm = surfaceGravityM * (100)
-print("Surface Gravity log(g):", np.log(surfaceGravityCm), "cm s^-2")
+surfaceGravityCm = surfaceGravityM
+print("Surface Gravity log(g):", np.log10(surfaceGravityCm), "cm s^-2")
