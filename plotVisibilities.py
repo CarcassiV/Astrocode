@@ -115,6 +115,7 @@ def uniformDiskFitBootstrap(visibilitiesSquared, spatialFrequencies, numberOfTri
         i += 1
     theta = sum/np.size(thetas)
     print(theta)
+    return theta
 
 oifitsobj = oifits.open('2011Dec07.17ms.sigGem.oifits')
 
