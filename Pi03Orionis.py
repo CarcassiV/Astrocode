@@ -4,6 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import jv
 import scipy.integrate as integrate
+import scipy.stats as stats
+import sympy as sp
 import random
 from dataclasses import dataclass
 from typing import Self
@@ -19,7 +21,7 @@ oifitsobj = oifits.open(hdulist)
 #        -with 1 trial, angular diameter of 1.47 milliarc seconds and alpha of 0.01. One trial took 43 mins T-T. How can I make it more efficient????
 #   check, Graph visibilities
 #   Graph closure phases, why are there more closure phases than spatial frequencies?
-#   Conduct a literature review and compile a list of stellar paramaters for pi03Ori
+#   Conduct a literature review and compile a list of stellar parameters for pi03Ori
 #   Solve for my own parameters
 #   Figure out how to use Candid to look for a binary, keep good data about the results
 
@@ -50,10 +52,22 @@ while i < np.size(oifitsobj.vis2):
     twoDVisibilities.append(np.ma.getdata(oifitsobj.vis2[i].vis2data))
     i += 1
 
+twoDVisibilitiesNotSquared = []
+i = 0
+while i < np.size(oifitsobj.vis):
+    twoDVisibilitiesNotSquared.append(np.ma.getdata(oifitsobj.vis[i].visamp))
+    i += 1
+
 twoDVisibilitiesError = []
 i = 0
 while i < np.size(oifitsobj.vis2):
     twoDVisibilitiesError.append(np.ma.getdata(oifitsobj.vis2[i].vis2err))
+    i += 1
+
+twoDVisibilitiesNotSquaredErr = []
+i = 0
+while i < np.size(oifitsobj.vis):
+    twoDVisibilitiesNotSquaredErr.append(np.ma.getdata(oifitsobj.vis[i].visamperr))
     i += 1
 
 twoDClosurePhases = []
@@ -78,44 +92,50 @@ while i < np.size(oifitsobj.vis2):
     i += 1 
 
 visibilitiesSquared = flatten(twoDVisibilities)
+visibilitiesNotSquared = flatten(twoDVisibilitiesNotSquared)
 visibilitiesSquaredErr = flatten(twoDVisibilitiesError)
+visibilitiesNotSquaredErr = flatten(twoDVisibilitiesNotSquaredErr)
 spatialFrequencies = flatten(twoDSpatialFrequency)
 #spatialFrequenciesFiveNights = flatten(twoDSpatialFrequencyFiveNights, 5, 8)
 closurePhases = flatten(twoDClosurePhases)
 closurePhasesErr = flatten(twoDClosurePhasesErrors)
+print(len(closurePhases))
 
 
 def uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, numberOfTrials):
     thetas = []
+    visibilitiesAtCenter = []
     #for each visibility, randomly sample a point on the error bar
     for i in range(0, numberOfTrials):
-        sampleVisibilitiesSquared = []
+        sampleVisibilities = []
         for i in range(0, np.size(visibilitiesSquared)):
-            randomVisibilitySquaredSample = random.gauss(visibilitiesSquared[i], visibilitiesSquaredErr[i]) #should be normal distribution 
-            sampleVisibilitiesSquared.append(randomVisibilitySquaredSample)
-        #with these points, for each theta from 1.7milliarc second to 2.7 milliarc second, calculate the 
-        #chi square value and find the optimal theta for that dataset
+            randomVisibilitySquaredSample = random.gauss(visibilitiesSquared[i], visibilitiesSquaredErr[i])
+            sampleVisibilities.append(randomVisibilitySquaredSample)
         chiSquareValues = {}
 
-        thetaMilliArcSeconds = np.arange(1, 1.6, 0.01)
+        thetaMilliArcSeconds = np.arange(1.41, 1.51, 0.001)
         thetaRadians = thetaMilliArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))
         i = 0
         while i < np.size(thetaRadians):
             chiSquare = 0
             j = 0
-            while j < np.size(sampleVisibilitiesSquared):
-                observed = sampleVisibilitiesSquared[j]
+            while j < np.size(sampleVisibilities):
+                observed = sampleVisibilities[j]
                 expected = ((2*jv(1, np.pi*thetaRadians[i]*spatialFrequencies[j]*1e6))/(np.pi*thetaRadians[i]*spatialFrequencies[j]*1e6))**2
                 chiSquareValue = ((observed-expected)**2)/expected
                 if not np.isnan(chiSquareValue):
                     chiSquare += chiSquareValue
                 j += 1
-            print('Theta:', thetaRadians[i], ', Chi Squared Value:', chiSquare)
+            print('Theta:', thetaRadians[i]/((1/1000)*(1/60)*(1/60)*(np.pi/180)), ', Chi Squared Value:', chiSquare)
             chiSquareValues.update({thetaRadians[i]: chiSquare})
             i+=1
-        thetas.append((min(chiSquareValues, key=chiSquareValues.get)))
-        print(min(chiSquareValues, key=chiSquareValues.get)/((1/1000)*(1/60)*(1/60)*(np.pi/180))) 
-    #repeat 500 times
+        thetas.append(min(chiSquareValues, key=chiSquareValues.get))
+        print(min(chiSquareValues, key=chiSquareValues.get))
+        x = sp.symbols('x')
+        equation = ((2*jv(1, np.pi*min(chiSquareValues, key=chiSquareValues.get)*x*1e6))/(np.pi*min(chiSquareValues, key=chiSquareValues.get)*x*1e6))**2
+        #visibilitiesAtCenter.append(sp.limit(equation, spatialFrequency, 0))
+        print(visibilitiesAtCenter)
+        print("Trial Number:", i, "Theta:", min(chiSquareValues, key=chiSquareValues.get)/((1/1000)*(1/60)*(1/60)*(np.pi/180))) 
     #take the average of all the theta
     print("done")
     i = 0
@@ -125,28 +145,48 @@ def uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spat
         i += 1
     theta = sum/np.size(thetas)
     print(theta/((1/1000)*(1/60)*(1/60)*(np.pi/180)))
-    return theta
 
-#uniformDiskTheta = uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 100)
+    #The error is calculated from the standard deviation of the trials
+    thetaError = np.std(thetas)
 
+    """i = 0
+    sum = 0
+    while i < np.size(visibilitiesAtCenter):
+        sum += visibilitiesAtCenter[i]
+        i += 1
+    visibilityAtCenter = sum/np.size(visibilitiesAtCenter)
+    print(visibilityAtCenter)
+
+    visibilityAtCenterError = np.std(visibilitiesAtCenter)
+    print(visibilityAtCenterError)"""
+
+    visibilityAtCenter = 0
+    visibilityAtCenterError = 0
+
+    return theta, thetaError, visibilityAtCenter, visibilityAtCenterError
+
+uniformDiskTheta, uniformDiskError, visibilityAtCenter, visibilityAtCenterError = uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 1000)
+print("Uniform Disk Theta:", uniformDiskError, " Error:", uniformDiskError, "Visibility at Center:", visibilityAtCenter, "Error:", visibilityAtCenterError)
+
+#limb-darkened model angular diameter
 def limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, numberOfTrials):
     chiSquareTestValues = []
     minChiSquareTestResultForATheta = chiSquareTestResult(0,.5,1e30)
-    #limb-darkened model angular diameter
+    
     for a in range(0, numberOfTrials):
         sampleVisibilitiesSquared = []
         for i in range(0, np.size(visibilitiesSquared)):
-            randomVisibilitySquaredSample = random.gauss(visibilitiesSquared[i], visibilitiesSquaredErr[i]) #should be normal distribution 
+            randomVisibilitySquaredSample = random.gauss(visibilitiesSquared[i], visibilitiesSquaredErr[i])
             sampleVisibilitiesSquared.append(randomVisibilitySquaredSample)
         sampleVisibilities = sampleVisibilitiesSquared
         
         thetaMilliArcSeconds = np.arange(1.2, 1.55, 0.01)
         thetaRadians = thetaMilliArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))
         i = 0
-        while i < np.size(thetaRadians): 
+        while i < np.size(thetaRadians): #are there libraries that already run chi square tests? More efficient than mine perhaps?
             j = 0
             minChiSquareTestResultForATheta = chiSquareTestResult(0,.5,1e10)
-            alpha = np.arange(0, .3, 0.01)
+            alpha = np.arange(.05, .3, 0.01)
             while j < np.size(alpha):
                 k = 0
                 chiSquare = 0
@@ -154,14 +194,14 @@ def limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFr
                 while k < np.size(sampleVisibilities):
                     observed = sampleVisibilities[k]
                     function = lambda r : ((1-r**2)**(alpha[j]/2))*jv(0, np.pi*thetaRadians[i]*r*spatialFrequencies[k]*1e6)*r
-                    integral, err = integrate.quad(function, 0, 1)
+                    integral, err = integrate.quad(function, 0, 1) #is quad an efficient function? Does python have more efficient integration?
                     expected = ((alpha[j]+2)*integral)**2
-                    chiSquareValue = ((observed-expected)**2)/expected
+                    chiSquareValue = ((observed-expected)**2)/expected #if I do the whole thing with visibility not square more efficient?
                     if not np.isnan(chiSquareValue):
                         chiSquare += chiSquareValue
                     k += 1
                 print("Theta value:", thetaRadians[i], "alpha value:", alpha[j], "chisquare:", chiSquare)
-                if (chiSquare < minChiSquareTestResultForATheta.chiSquare):
+                if (chiSquare < minChiSquareTestResultForATheta.chiSquare): #I compare every theta and alpha pair, is it more efficient to store them all and sort/compare at end to find min?
                     minChiSquareTestResultForATheta = chiSquareTestResult(thetaRadians[i], alpha[j], chiSquare)
                     #print(minChiSquareTestResultForATheta)
                     #print('switched value')
@@ -169,7 +209,7 @@ def limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFr
             print(minChiSquareTestResultForATheta)
             chiSquareTestValues.append(minChiSquareTestResultForATheta)
             i += 1
-        a+=1
+        a += 1
     print('done')
     i=0
     min = chiSquareTestResult(0,0,1e30)
@@ -183,14 +223,14 @@ def limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFr
     alpha = min.alpha
     return theta, alpha
 
-limbdarkenedTheta, alpha = limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 1)
-uniformDiskTheta = 1.48*((1/1000)*(1/60)*(1/60)*(np.pi/180))
+#limbdarkenedTheta, alpha = limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 1)
+#print("Limb darkened theta", limbdarkenedTheta)
+#print("Limb darkened coefficient", alpha)
+
+#uniformDiskTheta = 1.48*((1/1000)*(1/60)*(1/60)*(np.pi/180))
 #limbdarkenedTheta = 1.4*((1/1000)*(1/60)*(1/60)*(np.pi/180))
 #alpha = 0.05
-
-print(len(spatialFrequencies))
-print(len(closurePhases))
-
+"""
 x = np.arange(10, 225, .2) #for the visibility squared curve
 
 fig, ax = plt.subplots(2,1, sharex=True)
@@ -211,16 +251,16 @@ while i < np.size(x):
 
 ax[0].plot(x, limbDarkenedValues)
 
-"""ax[1].plot(spatialFrequencies, closurePhases, '.')
+ax[1].plot(spatialFrequencies, closurePhases, '.')
 ax[1].errorbar(spatialFrequencies, closurePhases, yerr=closurePhasesErr, fmt = '.')
 ax[1].set_xlabel('Spatial Frequency (Mλ)')
-ax[1].set_ylabel('Closure Phases (degrees)')"""
+ax[1].set_ylabel('Closure Phases (degrees)')
 
 mew = np.arange(0, 1, .0001)
 r = np.arange(0, 1, 0.0001)
 limbDarkeningCoefficient = [0, 0.2, 0.5, 1, 1.5, 3, 7]
 
-"""figTwo, axTwo = plt.subplots(2, 1)
+figTwo, axTwo = plt.subplots(2, 1)
 
 for i in range(0, np.size(limbDarkeningCoefficient)):
     axTwo[0].plot(mew, mew**limbDarkeningCoefficient[i])
@@ -228,7 +268,7 @@ for i in range(0, np.size(limbDarkeningCoefficient)):
 axTwo[0].set_xlabel('μ')
 axTwo[1].set_xlabel('r')
 axTwo[0].set_ylabel('Intensity, I(r)')
-axTwo[1].set_ylabel('Intensity, I(r)')"""
+axTwo[1].set_ylabel('Intensity, I(r)')
 
 plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.01, hspace=.085)
-plt.show()
+plt.show()"""
