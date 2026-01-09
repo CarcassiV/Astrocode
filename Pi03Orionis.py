@@ -132,8 +132,8 @@ def uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spat
         thetas.append(min(chiSquareValues, key=chiSquareValues.get))
         print(min(chiSquareValues, key=chiSquareValues.get))
         x = sp.symbols('x')
-        equation = ((2*jv(1, np.pi*min(chiSquareValues, key=chiSquareValues.get)*x*1e6))/(np.pi*min(chiSquareValues, key=chiSquareValues.get)*x*1e6))**2
-        #visibilitiesAtCenter.append(sp.limit(equation, spatialFrequency, 0))
+        equation = ((2*sp.besselj(np.pi*min(chiSquareValues, key=chiSquareValues.get)*x*1e6, 1))/(np.pi*min(chiSquareValues, key=chiSquareValues.get)*x*1e6))**2
+        visibilitiesAtCenter.append(sp.limit(equation, x, 0))
         print(visibilitiesAtCenter)
         print("Trial Number:", i, "Theta:", min(chiSquareValues, key=chiSquareValues.get)/((1/1000)*(1/60)*(1/60)*(np.pi/180))) 
     #take the average of all the theta
