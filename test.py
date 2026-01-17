@@ -1,10 +1,13 @@
-import matplotlib.pyplot as plt
-
-x = [1,2,3,4,5,6,1,2,3,4,5,6]
-y = [1,2,3,4,5,6,1,2,3,4,5,6]
-
-c = [1,1,1,1,1,1,1,1,1,1,1,1]
-
-plt.bar(x, y)
-plt.errorbar(x, y, yerr=c, fmt="o", color="r")
-plt.show()
+import time
+ 
+start_time = time.time()
+for i in range(1000000):
+    print(i)
+end_time = time.time()
+print(f"Time taken with print: {end_time - start_time} seconds")
+ 
+start_time = time.time()
+for i in range(1000000):
+    pass
+end_time = time.time()
+print(f"Time taken without print: {end_time - start_time} seconds")
