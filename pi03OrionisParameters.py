@@ -35,7 +35,10 @@ def uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spat
             sampleVisibilities.append(randomVisibilitySquaredSample)
         chiSquareValues = {}
 
-        thetaMilliArcSeconds = np.arange(1.41, 1.51, 0.01)
+        bottomThetaRange = 1.46
+        topThetaRange = 1.5
+
+        thetaMilliArcSeconds = np.arange(bottomThetaRange, topThetaRange, 0.001)
         thetaRadians = thetaMilliArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))
         i = 0
         while i < np.size(thetaRadians):
@@ -53,11 +56,15 @@ def uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spat
             chiSquareValues.update({thetaRadians[i]: chiSquare})
             i += 1
         thetas.append(min(chiSquareValues, key=chiSquareValues.get))
-        x = sp.symbols('x')
-        equation = ((2*sp.besselj(np.pi*min(chiSquareValues, key=chiSquareValues.get)*x*1e6, 1))/(np.pi*min(chiSquareValues, key=chiSquareValues.get)*x*1e6))**2
-        visibilitiesAtCenter.append(sp.limit(equation, x, 0))
-        n += 1
         print("Trial Number:", n, "Theta:", min(chiSquareValues, key=chiSquareValues.get)/((1/1000)*(1/60)*(1/60)*(np.pi/180))) 
+
+        """x = sp.symbols('x')
+        equation = ((2*sp.besselj(np.pi*min(chiSquareValues, key=chiSquareValues.get)*x*1e6, 1))/(np.pi*min(chiSquareValues, key=chiSquareValues.get)*x*1e6))**2
+        visibilitiesAtCenter.append(sp.limit(equation, x, 0))"""
+        if(min(chiSquareValues, key=chiSquareValues.get)/((1/1000)*(1/60)*(1/60)*(np.pi/180)) == bottomThetaRange or min(chiSquareValues, key=chiSquareValues.get)/((1/1000)*(1/60)*(1/60)*(np.pi/180)) == topThetaRange):
+            print("Expand theta range, stopping loop")
+            break
+        n += 1
     #take the average of all the theta
     print("done")
     i = 0
@@ -93,20 +100,27 @@ def limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFr
     chiSquareTestValues = []
     minChiSquareTestResultForATheta = chiSquareTestResult(0,.5,1e10)
     
-    for a in range(0, numberOfTrials):
+    for n in range(0, numberOfTrials):
         sampleVisibilitiesSquared = []
         for i in range(0, np.size(visibilitiesSquared)):
             randomVisibilitySquaredSample = random.gauss(visibilitiesSquared[i], visibilitiesSquaredErr[i])
             sampleVisibilitiesSquared.append(randomVisibilitySquaredSample)
         sampleVisibilities = sampleVisibilitiesSquared
+
+        bottomThetaRange = 1.9
+        topThetaRange = 2
         
-        thetaMilliArcSeconds = np.arange(1.39, 1.55, 0.01)
+        thetaMilliArcSeconds = np.arange(bottomThetaRange, topThetaRange, 0.01)
         thetaRadians = thetaMilliArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))
         i = 0
         while i < np.size(thetaRadians): #are there libraries that already run chi square tests? More efficient than mine perhaps?
             j = 0
             minChiSquareTestResultForATheta = chiSquareTestResult(0,.5,1e10)
-            alpha = np.arange(.08, .23, 0.01)
+
+            bottomAlphaRange = 0.0
+            topAlphaRange = 0.22
+
+            alpha = np.arange(bottomAlphaRange, topAlphaRange, 0.01)
             while j < np.size(alpha):
                 k = 0
                 chiSquare = 0
@@ -120,15 +134,22 @@ def limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFr
                     if not np.isnan(chiSquareValue):
                         chiSquare += chiSquareValue
                     k += 1
-                print("Theta value:", thetaRadians[i], "alpha value:", alpha[j], "chisquare:", chiSquare)
+                print("Theta value:", thetaRadians[i]/((1/1000)*(1/60)*(1/60)*(np.pi/180)), "alpha value:", alpha[j], "chisquare:", chiSquare)
                 if (chiSquare < minChiSquareTestResultForATheta.chiSquare): #I compare every theta and alpha pair, is it more efficient to store them all and sort/compare at end to find min?
                     minChiSquareTestResultForATheta = chiSquareTestResult(thetaRadians[i], alpha[j], chiSquare)
                 j += 1
             print(minChiSquareTestResultForATheta)
             chiSquareTestValues.append(minChiSquareTestResultForATheta)
-            #Test if this every hits the extreme values of theta, if so expand the range
+            print(chiSquareTestValues)
+            if(minChiSquareTestResultForATheta.alpha == bottomAlphaRange or minChiSquareTestResultForATheta.alpha == topAlphaRange):
+                print("Expand alpha range, stopping loop")
+                break
             i += 1
-        a += 1
+        #Test if this every hits the extreme values of theta, if so expand the range
+        if(minChiSquareTestResultForATheta.angularDiameter/((1/1000)*(1/60)*(1/60)*(np.pi/180)) == bottomThetaRange or minChiSquareTestResultForATheta.angularDiameter/((1/1000)*(1/60)*(1/60)*(np.pi/180)) == topThetaRange):
+                print("Expand theta range, stopping loop")
+                break
+        n += 1
     print('done')
     i=0
     min = chiSquareTestResult(0,0,1e10)
@@ -138,6 +159,9 @@ def limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFr
             print('computing')
         i += 1
     print(min)
+
+    
+
     theta = min.angularDiameter
     alpha = min.alpha
     return theta, alpha

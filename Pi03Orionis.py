@@ -7,9 +7,7 @@ import scipy.integrate as integrate
 import scipy.stats as stats
 import sympy as sp
 import random
-from dataclasses import dataclass
-from typing import Self
-import pi03OrionisParameters
+from pi03OrionisParameters import uniformDiskFitErrorBarTest, limbdarkenedThetaTest
 
 hdulist = fits.open('MIRC_L2.2025Sep21.pi03_Ori.MIRCX_IDL.RMR_deepedge.AVG5m.oifits')
 hdulist['OI_ARRAY'].header['OI_REVN'] = 1
@@ -72,12 +70,9 @@ while i < np.size(oifitsobj.t3):
     i += 1
 
 twoDSpatialFrequency = []
-twoDSpatialFrequencyFiveNights = []
 i = 0
 while i < np.size(oifitsobj.vis2):
     twoDSpatialFrequency.append(np.sqrt((oifitsobj.vis2[i].ucoord)**2 + (oifitsobj.vis2[i].vcoord)**2)/oifitsobj.vis2[i].wavelength.eff_wave/1e6)
-    if(i<5):
-        twoDSpatialFrequencyFiveNights.append(np.sqrt((oifitsobj.vis2[i].ucoord)**2 + (oifitsobj.vis2[i].vcoord)**2)/oifitsobj.vis2[i].wavelength.eff_wave/1e6)
     i += 1
 
 visibilitiesSquared = flatten(twoDVisibilities)
@@ -86,19 +81,18 @@ visibilitiesNotSquared = flatten(twoDVisibilitiesNotSquared)
 visibilitiesSquaredErr = flatten(twoDVisibilitiesError)
 visibilitiesNotSquaredErr = flatten(twoDVisibilitiesNotSquaredErr)
 spatialFrequencies = flatten(twoDSpatialFrequency)
-#spatialFrequenciesFiveNights = flatten(twoDSpatialFrequencyFiveNights, 5, 8)
 closurePhases = flatten(twoDClosurePhases)
 closurePhasesErr = flatten(twoDClosurePhasesErrors)
 print(len(closurePhases))
 
 #uniformDiskTheta, uniformDiskError, visibilityAtCenter, visibilityAtCenterError = uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 1000)
-#print("Uniform Disk Theta:", uniformDiskError, " Error:", uniformDiskError, "Visibility at Center:", visibilityAtCenter, "Error:", visibilityAtCenterError)
+#print("Uniform Disk Theta:", uniformDiskTheta, " Error:", uniformDiskError, "Visibility at Center:", visibilityAtCenter, "Error:", visibilityAtCenterError)
 
-#limbdarkenedTheta, alpha = limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 1)
-#print("Limb darkened theta", limbdarkenedTheta)
-#print("Limb darkened coefficient", alpha)
+limbdarkenedTheta, alpha = limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 1)
+print("Limb darkened theta", limbdarkenedTheta/((1/1000)*(1/60)*(1/60)*(np.pi/180)))
+print("Limb darkened coefficient", alpha)
 
-uniformDiskTheta = 1.48*((1/1000)*(1/60)*(1/60)*(np.pi/180))
+uniformDiskTheta = 1.4845949999999937*((1/1000)*(1/60)*(1/60)*(np.pi/180))
 limbdarkenedTheta = 1.4*((1/1000)*(1/60)*(1/60)*(np.pi/180))
 alpha = 0.05
 
@@ -109,13 +103,13 @@ fig, ax = plt.subplots(2,1, sharex=True)
 print("about to plot")
 ax[0].plot(spatialFrequencies, visibilitiesSquared, '.')
 ax[0].errorbar(spatialFrequencies, visibilitiesSquared, yerr=visibilitiesSquaredErr, fmt = '.')
+ax[1].set_xlabel('Spatial Frequency (Mλ)(baseline/wavelength)')
 ax[0].set_ylabel('Visibilities Squared')
-ax[0].set_yscale('log', base=10)
+#ax[0].set_yscale('log', base=10)
 
 #Closure Phases plot
 """ax[1].plot(spatialFrequencies, closurePhases, '.')
 ax[1].errorbar(spatialFrequencies, closurePhases, yerr=closurePhasesErr, fmt = '.')
-ax[1].set_xlabel('Spatial Frequency (Mλ)')
 ax[1].set_ylabel('Closure Phases (degrees)')"""
 
 #Different alpha value plots
@@ -134,7 +128,7 @@ axTwo[0].set_ylabel('Intensity, I(r)')
 axTwo[1].set_ylabel('Intensity, I(r)')
 
 #Plot models
-ax[0].plot(x, ((2*jv(1, np.pi*uniformDiskTheta*x*1e6))/(np.pi*uniformDiskTheta*x*1e6))**2) #uniform disk model
+ax[0].plot(x, ((2*jv(1, np.pi*uniformDiskTheta*x*1e6))/(np.pi*uniformDiskTheta*x*1e6))**2, label='Uniform Disk Model') #uniform disk model
 
 limbDarkenedValues = []
 i = 0
@@ -144,7 +138,8 @@ while i < np.size(x):
     limbDarkenedValues.append((alpha+2)*np.abs(integral))
     i+=1
 
-ax[0].plot(x, limbDarkenedValues)
+ax[0].plot(x, limbDarkenedValues, label='Limb Darkened Model')
+ax[0].legend()
 
 plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.01, hspace=.085)
 plt.show()
