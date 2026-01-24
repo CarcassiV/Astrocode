@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.special import jv
+from scipy.special import jv, j0, j1
 import random
 import scipy.integrate as integrate
 from dataclasses import dataclass
@@ -35,8 +35,8 @@ def uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spat
             sampleVisibilities.append(randomVisibilitySquaredSample)
         chiSquareValues = {}
 
-        bottomThetaRange = 1.46
-        topThetaRange = 1.5
+        bottomThetaRange = 1.4
+        topThetaRange = 1.55
 
         thetaMilliArcSeconds = np.arange(bottomThetaRange, topThetaRange, 0.001)
         thetaRadians = thetaMilliArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))
@@ -46,13 +46,12 @@ def uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spat
             j = 0
             while j < np.size(sampleVisibilities):
                 observed = sampleVisibilities[j]
-                expected = ((2*jv(1, np.pi*thetaRadians[i]*spatialFrequencies[j]*1e6))/(np.pi*thetaRadians[i]*spatialFrequencies[j]*1e6))**2
+                expected = ((2*j1(np.pi*thetaRadians[i]*spatialFrequencies[j]*1e6))/(np.pi*thetaRadians[i]*spatialFrequencies[j]*1e6))**2
                 chiSquareValue = ((observed-expected)**2)/expected
                 if not np.isnan(chiSquareValue):
                     chiSquare += chiSquareValue
                 j += 1
-            #Test if this every hits the extreme values of theta, if so expand the range. Try to make range as small as possible to save time
-            #print('Theta:', thetaRadians[i]/((1/1000)*(1/60)*(1/60)*(np.pi/180)), ', Chi Squared Value:', chiSquare)
+            print('Theta:', thetaRadians[i]/((1/1000)*(1/60)*(1/60)*(np.pi/180)), ', Chi Squared Value:', chiSquare)
             chiSquareValues.update({thetaRadians[i]: chiSquare})
             i += 1
         thetas.append(min(chiSquareValues, key=chiSquareValues.get))
@@ -61,6 +60,8 @@ def uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spat
         """x = sp.symbols('x')
         equation = ((2*sp.besselj(np.pi*min(chiSquareValues, key=chiSquareValues.get)*x*1e6, 1))/(np.pi*min(chiSquareValues, key=chiSquareValues.get)*x*1e6))**2
         visibilitiesAtCenter.append(sp.limit(equation, x, 0))"""
+        
+        #Test if this ever hits the extreme values of theta, if so expand the range. Try to make range as small as possible to save time
         if(min(chiSquareValues, key=chiSquareValues.get)/((1/1000)*(1/60)*(1/60)*(np.pi/180)) == bottomThetaRange or min(chiSquareValues, key=chiSquareValues.get)/((1/1000)*(1/60)*(1/60)*(np.pi/180)) == topThetaRange):
             print("Expand theta range, stopping loop")
             break
@@ -92,7 +93,7 @@ def uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spat
     visibilityAtCenter = 0
     visibilityAtCenterError = 0
 
-    return theta, thetaError, visibilityAtCenter, visibilityAtCenterError
+    return theta, thetaError, chiSquareValues, visibilityAtCenter, visibilityAtCenterError
 
 
 #limb-darkened model angular diameter
@@ -105,12 +106,11 @@ def limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFr
         for i in range(0, np.size(visibilitiesSquared)):
             randomVisibilitySquaredSample = random.gauss(visibilitiesSquared[i], visibilitiesSquaredErr[i])
             sampleVisibilitiesSquared.append(randomVisibilitySquaredSample)
-        sampleVisibilities = sampleVisibilitiesSquared
 
-        bottomThetaRange = 1.9
-        topThetaRange = 2
+        bottomThetaRange = 1.3
+        topThetaRange = 2.1
         
-        thetaMilliArcSeconds = np.arange(bottomThetaRange, topThetaRange, 0.01)
+        thetaMilliArcSeconds = np.arange(bottomThetaRange, topThetaRange, 0.1)
         thetaRadians = thetaMilliArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))
         i = 0
         while i < np.size(thetaRadians): #are there libraries that already run chi square tests? More efficient than mine perhaps?
@@ -125,9 +125,9 @@ def limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFr
                 k = 0
                 chiSquare = 0
                 alphaValuesForOneTheta = {}
-                while k < np.size(sampleVisibilities):
-                    observed = sampleVisibilities[k]
-                    function = lambda r : ((1-r**2)**(alpha[j]/2))*jv(0, np.pi*thetaRadians[i]*r*spatialFrequencies[k]*1e6)*r
+                while k < np.size(sampleVisibilitiesSquared):
+                    observed = sampleVisibilitiesSquared[k]
+                    function = lambda r : ((1-r**2)**(alpha[j]/2))*j0(0, np.pi*thetaRadians[i]*r*spatialFrequencies[k]*1e6)*r
                     integral, err = integrate.quad(function, 0, 1) #is quad an efficient function? Does python have more efficient integration?
                     expected = ((alpha[j]+2)*integral)**2
                     chiSquareValue = ((observed-expected)**2)/expected #if I do the whole thing with visibility not square more efficient?
@@ -141,14 +141,14 @@ def limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFr
             print(minChiSquareTestResultForATheta)
             chiSquareTestValues.append(minChiSquareTestResultForATheta)
             print(chiSquareTestValues)
-            if(minChiSquareTestResultForATheta.alpha == bottomAlphaRange or minChiSquareTestResultForATheta.alpha == topAlphaRange):
+            """if(minChiSquareTestResultForATheta.alpha == bottomAlphaRange or minChiSquareTestResultForATheta.alpha == topAlphaRange):
                 print("Expand alpha range, stopping loop")
-                break
+                break"""
             i += 1
         #Test if this every hits the extreme values of theta, if so expand the range
-        if(minChiSquareTestResultForATheta.angularDiameter/((1/1000)*(1/60)*(1/60)*(np.pi/180)) == bottomThetaRange or minChiSquareTestResultForATheta.angularDiameter/((1/1000)*(1/60)*(1/60)*(np.pi/180)) == topThetaRange):
+        """if(minChiSquareTestResultForATheta.angularDiameter/((1/1000)*(1/60)*(1/60)*(np.pi/180)) == bottomThetaRange or minChiSquareTestResultForATheta.angularDiameter/((1/1000)*(1/60)*(1/60)*(np.pi/180)) == topThetaRange):
                 print("Expand theta range, stopping loop")
-                break
+                break"""
         n += 1
     print('done')
     i=0

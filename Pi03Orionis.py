@@ -2,7 +2,7 @@ from astropy.io import fits
 import oifits
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.special import jv
+from scipy.special import jv, j0, j1
 import scipy.integrate as integrate
 import scipy.stats as stats
 import sympy as sp
@@ -85,16 +85,16 @@ closurePhases = flatten(twoDClosurePhases)
 closurePhasesErr = flatten(twoDClosurePhasesErrors)
 print(len(closurePhases))
 
-#uniformDiskTheta, uniformDiskError, visibilityAtCenter, visibilityAtCenterError = uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 1000)
-#print("Uniform Disk Theta:", uniformDiskTheta, " Error:", uniformDiskError, "Visibility at Center:", visibilityAtCenter, "Error:", visibilityAtCenterError)
+uniformDiskTheta, uniformDiskError, chiSquareValues, visibilityAtCenter, visibilityAtCenterError = uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 1)
+print("Uniform Disk Theta:", uniformDiskTheta, " Error:", uniformDiskError, "Visibility at Center:", visibilityAtCenter, "Error:", visibilityAtCenterError)
 
-limbdarkenedTheta, alpha = limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 1)
+"""limbdarkenedTheta, alpha = limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 1)
 print("Limb darkened theta", limbdarkenedTheta/((1/1000)*(1/60)*(1/60)*(np.pi/180)))
-print("Limb darkened coefficient", alpha)
+print("Limb darkened coefficient", alpha)"""
 
-uniformDiskTheta = 1.4845949999999937*((1/1000)*(1/60)*(1/60)*(np.pi/180))
-limbdarkenedTheta = 1.4*((1/1000)*(1/60)*(1/60)*(np.pi/180))
-alpha = 0.05
+uniformDiskTheta = 1.4845949999999937*((1/1000)*(1/60)*(1/60)*(np.pi/180)) #1.4845949999999937
+limbdarkenedTheta = 1.5*((1/1000)*(1/60)*(1/60)*(np.pi/180))
+alpha = 0.06
 
 x = np.arange(10, 225, .2) #for the visibility squared curve
 
@@ -105,7 +105,7 @@ ax[0].plot(spatialFrequencies, visibilitiesSquared, '.')
 ax[0].errorbar(spatialFrequencies, visibilitiesSquared, yerr=visibilitiesSquaredErr, fmt = '.')
 ax[1].set_xlabel('Spatial Frequency (Mλ)(baseline/wavelength)')
 ax[0].set_ylabel('Visibilities Squared')
-#ax[0].set_yscale('log', base=10)
+ax[0].set_yscale('log', base=10)
 
 #Closure Phases plot
 """ax[1].plot(spatialFrequencies, closurePhases, '.')
@@ -113,7 +113,7 @@ ax[1].errorbar(spatialFrequencies, closurePhases, yerr=closurePhasesErr, fmt = '
 ax[1].set_ylabel('Closure Phases (degrees)')"""
 
 #Different alpha value plots
-mew = np.arange(0, 1, .0001)
+"""mew = np.arange(0, 1, .0001)
 r = np.arange(0, 1, 0.0001)
 limbDarkeningCoefficient = [0, 0.2, 0.5, 1, 1.5, 3, 7]
 
@@ -126,16 +126,23 @@ axTwo[0].set_xlabel('μ')
 axTwo[1].set_xlabel('r')
 axTwo[0].set_ylabel('Intensity, I(r)')
 axTwo[1].set_ylabel('Intensity, I(r)')
+"""
+#uniform disk chisquared values plot
+figThree, axThree = plt.subplots()
+
+axThree.plot(list(chiSquareValues.keys()), list(chiSquareValues.values()))
+axThree.set_xlabel("Theta in radians")
+axThree.set_ylabel("Chi Squared Value")
 
 #Plot models
-ax[0].plot(x, ((2*jv(1, np.pi*uniformDiskTheta*x*1e6))/(np.pi*uniformDiskTheta*x*1e6))**2, label='Uniform Disk Model') #uniform disk model
+ax[0].plot(x, ((2*j1(np.pi*uniformDiskTheta*x*1e6))/(np.pi*uniformDiskTheta*x*1e6))**2, label='Uniform Disk Model') #uniform disk model
 
 limbDarkenedValues = []
 i = 0
 while i < np.size(x):
-    function = lambda r : ((1-r**2)**(alpha/2))*jv(0, np.pi*limbdarkenedTheta*r*x[i]*1e6)*r
+    function = lambda r : ((1-r**2)**(alpha/2))*j0(np.pi*limbdarkenedTheta*r*x[i]*1e6)*r
     integral, err = integrate.quad(function, 0, 1, epsabs=1e-14)
-    limbDarkenedValues.append((alpha+2)*np.abs(integral))
+    limbDarkenedValues.append(((alpha+2)*np.abs(integral))**2)
     i+=1
 
 ax[0].plot(x, limbDarkenedValues, label='Limb Darkened Model')

@@ -51,7 +51,7 @@ def uniformDiskFitErrorBar(visibilitiesSquared, visibilitiesSquaredErr, spatialF
                 if not np.isnan(chiSquareValue):
                     chiSquare += chiSquareValue
                 j += 1
-            #print('Theta:', thetaRadians[i], ', Chi Squared Value:', chiSquare)
+            print('Theta:', thetaRadians[i], ', Chi Squared Value:', chiSquare)
             chiSquareValues.update({thetaRadians[i]: chiSquare})
             i+=1
         thetas.append((min(chiSquareValues, key=chiSquareValues.get)))
@@ -100,7 +100,7 @@ def uniformDiskFitBootstrap(visibilitiesSquared, spatialFrequencies, numberOfTri
                 if not np.isnan(chiSquareValue):
                     chiSquare += chiSquareValue
                 j += 1
-            #print('Theta:', thetaRadians[i], ', Chi Squared Value:', chiSquare)
+            print('Theta:', thetaRadians[i], ', Chi Squared Value:', chiSquare)
             chiSquareValues.update({thetaRadians[i]: chiSquare})
             i+=1
         thetas.append((min(chiSquareValues, key=chiSquareValues.get)))
@@ -158,6 +158,8 @@ spatialFrequencies = flatten(twoDSpatialFrequency, 8, 8)
 spatialFrequenciesFiveNights = flatten(twoDSpatialFrequencyFiveNights, 5, 8)
 closurePhases = flatten(twoDClosurePhases, 5, 8)
 closurePhasesErr = flatten(twoDClosurePhasesErrors, 5, 8)
+
+uniformDiskTheta = uniformDiskFitErrorBar(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 500)
 
 chiSquareTestValues = []
 minChiSquareTestResultForATheta = chiSquareTestResult(0,.5,1e30)
