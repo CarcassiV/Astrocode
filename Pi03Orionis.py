@@ -7,7 +7,7 @@ import scipy.integrate as integrate
 import scipy.stats as stats
 import sympy as sp
 import random
-from pi03OrionisParameters import uniformDiskFitErrorBarTest, limbdarkenedThetaTest
+from oifitsTools import uniformDiskFitErrorBarTest, limbdarkenedThetaTest
 
 hdulist = fits.open('MIRC_L2.2025Sep21.pi03_Ori.MIRCX_IDL.RMR_deepedge.AVG5m.oifits')
 hdulist['OI_ARRAY'].header['OI_REVN'] = 1
@@ -128,11 +128,19 @@ axTwo[0].set_ylabel('Intensity, I(r)')
 axTwo[1].set_ylabel('Intensity, I(r)')
 """
 #uniform disk chisquared values plot
+chiSquareValuesList = list(chiSquareValues.values())
+i = 0
+while i < np.size(chiSquareValuesList):
+    if(chiSquareValuesList[i] > 500):
+        chiSquareValuesList[i] = np.nan
+    i += 1
+
 figThree, axThree = plt.subplots()
 
-axThree.plot(list(chiSquareValues.keys()), list(chiSquareValues.values()))
-axThree.set_xlabel("Theta in radians")
+axThree.plot(list(chiSquareValues.keys()), chiSquareValuesList)
+axThree.set_xlabel("Angular Diameter in Milliarcseconds")
 axThree.set_ylabel("Chi Squared Value")
+axThree.set_title("Uniform Disk Model Chi Squared Values")
 
 #Plot models
 ax[0].plot(x, ((2*j1(np.pi*uniformDiskTheta*x*1e6))/(np.pi*uniformDiskTheta*x*1e6))**2, label='Uniform Disk Model') #uniform disk model

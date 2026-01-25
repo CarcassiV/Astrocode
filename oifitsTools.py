@@ -52,17 +52,17 @@ def uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spat
                     chiSquare += chiSquareValue
                 j += 1
             print('Theta:', thetaRadians[i]/((1/1000)*(1/60)*(1/60)*(np.pi/180)), ', Chi Squared Value:', chiSquare)
-            chiSquareValues.update({thetaRadians[i]: chiSquare})
+            chiSquareValues.update({thetaRadians[i]/((1/1000)*(1/60)*(1/60)*(np.pi/180)): chiSquare})
             i += 1
         thetas.append(min(chiSquareValues, key=chiSquareValues.get))
-        print("Trial Number:", n, "Theta:", min(chiSquareValues, key=chiSquareValues.get)/((1/1000)*(1/60)*(1/60)*(np.pi/180))) 
+        print("Trial Number:", n, "Theta:", min(chiSquareValues, key=chiSquareValues.get)) 
 
         """x = sp.symbols('x')
         equation = ((2*sp.besselj(np.pi*min(chiSquareValues, key=chiSquareValues.get)*x*1e6, 1))/(np.pi*min(chiSquareValues, key=chiSquareValues.get)*x*1e6))**2
         visibilitiesAtCenter.append(sp.limit(equation, x, 0))"""
         
         #Test if this ever hits the extreme values of theta, if so expand the range. Try to make range as small as possible to save time
-        if(min(chiSquareValues, key=chiSquareValues.get)/((1/1000)*(1/60)*(1/60)*(np.pi/180)) == bottomThetaRange or min(chiSquareValues, key=chiSquareValues.get)/((1/1000)*(1/60)*(1/60)*(np.pi/180)) == topThetaRange):
+        if(min(chiSquareValues, key=chiSquareValues.get) == bottomThetaRange or min(chiSquareValues, key=chiSquareValues.get) == topThetaRange):
             print("Expand theta range, stopping loop")
             break
         n += 1
@@ -74,7 +74,7 @@ def uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spat
         sum += thetas[i]
         i += 1
     theta = sum/np.size(thetas)
-    print(theta/((1/1000)*(1/60)*(1/60)*(np.pi/180)))
+    print(theta)
 
     #The error is calculated from the standard deviation of the trials
     thetaError = np.std(thetas)
