@@ -30,10 +30,11 @@ def uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spat
     #for each visibility, randomly sample a point on the error bar
     for n in range(0, numberOfTrials):
         sampleVisibilities = []
-        for i in range(0, np.size(visibilitiesSquared)):
+        """for i in range(0, np.size(visibilitiesSquared)):
             randomVisibilitySquaredSample = random.gauss(visibilitiesSquared[i], visibilitiesSquaredErr[i])
-            sampleVisibilities.append(randomVisibilitySquaredSample)
+            sampleVisibilities.append(randomVisibilitySquaredSample)"""
         chiSquareValues = {}
+        sampleVisibilities = visibilitiesSquared
 
         bottomThetaRange = 1.4
         topThetaRange = 1.55
@@ -103,22 +104,23 @@ def limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFr
     
     for n in range(0, numberOfTrials):
         sampleVisibilitiesSquared = []
-        for i in range(0, np.size(visibilitiesSquared)):
+        """for i in range(0, np.size(visibilitiesSquared)):
             randomVisibilitySquaredSample = random.gauss(visibilitiesSquared[i], visibilitiesSquaredErr[i])
-            sampleVisibilitiesSquared.append(randomVisibilitySquaredSample)
+            sampleVisibilitiesSquared.append(randomVisibilitySquaredSample)"""
+        sampleVisibilitiesSquared = visibilitiesSquared
 
-        bottomThetaRange = 1.3
-        topThetaRange = 2.1
+        bottomThetaRange = 1.51
+        topThetaRange = 1.535
         
-        thetaMilliArcSeconds = np.arange(bottomThetaRange, topThetaRange, 0.1)
+        thetaMilliArcSeconds = np.arange(bottomThetaRange, topThetaRange, 0.001)
         thetaRadians = thetaMilliArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))
         i = 0
         while i < np.size(thetaRadians): #are there libraries that already run chi square tests? More efficient than mine perhaps?
             j = 0
             minChiSquareTestResultForATheta = chiSquareTestResult(0,.5,1e10)
 
-            bottomAlphaRange = 0.0
-            topAlphaRange = 0.22
+            bottomAlphaRange = 0.1
+            topAlphaRange = 0.25
 
             alpha = np.arange(bottomAlphaRange, topAlphaRange, 0.01)
             while j < np.size(alpha):
@@ -127,7 +129,7 @@ def limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFr
                 alphaValuesForOneTheta = {}
                 while k < np.size(sampleVisibilitiesSquared):
                     observed = sampleVisibilitiesSquared[k]
-                    function = lambda r : ((1-r**2)**(alpha[j]/2))*j0(0, np.pi*thetaRadians[i]*r*spatialFrequencies[k]*1e6)*r
+                    function = lambda r : ((1-r**2)**(alpha[j]/2))*j0(np.pi*thetaRadians[i]*r*spatialFrequencies[k]*1e6)*r
                     integral, err = integrate.quad(function, 0, 1) #is quad an efficient function? Does python have more efficient integration?
                     expected = ((alpha[j]+2)*integral)**2
                     chiSquareValue = ((observed-expected)**2)/expected #if I do the whole thing with visibility not square more efficient?
@@ -140,7 +142,7 @@ def limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFr
                 j += 1
             print(minChiSquareTestResultForATheta)
             chiSquareTestValues.append(minChiSquareTestResultForATheta)
-            print(chiSquareTestValues)
+            #print(chiSquareTestValues)
             """if(minChiSquareTestResultForATheta.alpha == bottomAlphaRange or minChiSquareTestResultForATheta.alpha == topAlphaRange):
                 print("Expand alpha range, stopping loop")
                 break"""

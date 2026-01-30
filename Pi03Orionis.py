@@ -75,26 +75,34 @@ while i < np.size(oifitsobj.vis2):
     twoDSpatialFrequency.append(np.sqrt((oifitsobj.vis2[i].ucoord)**2 + (oifitsobj.vis2[i].vcoord)**2)/oifitsobj.vis2[i].wavelength.eff_wave/1e6)
     i += 1
 
+twoDSpatialFrequencyClosurePhases = []
+i = 0
+while i < np.size(oifitsobj.t3):
+    twoDSpatialFrequencyClosurePhases.append(np.sqrt((oifitsobj.t3[i].u1coord)**2 + (oifitsobj.t3[i].v1coord)**2)/oifitsobj.t3[i].wavelength.eff_wave/1e6)
+    i += 1
+
 visibilitiesSquared = flatten(twoDVisibilities)
 print(len(visibilitiesSquared))
 visibilitiesNotSquared = flatten(twoDVisibilitiesNotSquared)
 visibilitiesSquaredErr = flatten(twoDVisibilitiesError)
 visibilitiesNotSquaredErr = flatten(twoDVisibilitiesNotSquaredErr)
 spatialFrequencies = flatten(twoDSpatialFrequency)
+print(len(spatialFrequencies))
 closurePhases = flatten(twoDClosurePhases)
 closurePhasesErr = flatten(twoDClosurePhasesErrors)
+spatialFrequenciesClosurePhases = flatten(twoDSpatialFrequencyClosurePhases)
 print(len(closurePhases))
 
-uniformDiskTheta, uniformDiskError, chiSquareValues, visibilityAtCenter, visibilityAtCenterError = uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 1)
-print("Uniform Disk Theta:", uniformDiskTheta, " Error:", uniformDiskError, "Visibility at Center:", visibilityAtCenter, "Error:", visibilityAtCenterError)
+#uniformDiskTheta, uniformDiskError, chiSquareValues, visibilityAtCenter, visibilityAtCenterError = uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 1)
+#print("Uniform Disk Theta:", uniformDiskTheta, " Error:", uniformDiskError, "Visibility at Center:", visibilityAtCenter, "Error:", visibilityAtCenterError)
 
-"""limbdarkenedTheta, alpha = limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 1)
+limbdarkenedTheta, alpha = limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 1)
 print("Limb darkened theta", limbdarkenedTheta/((1/1000)*(1/60)*(1/60)*(np.pi/180)))
-print("Limb darkened coefficient", alpha)"""
+print("Limb darkened coefficient", alpha)
 
 uniformDiskTheta = 1.4845949999999937*((1/1000)*(1/60)*(1/60)*(np.pi/180)) #1.4845949999999937
-limbdarkenedTheta = 1.5*((1/1000)*(1/60)*(1/60)*(np.pi/180))
-alpha = 0.06
+limbdarkenedTheta = 1.52*((1/1000)*(1/60)*(1/60)*(np.pi/180)) #theta of 1.52, alpha of 0.13
+alpha = 0.13
 
 x = np.arange(10, 225, .2) #for the visibility squared curve
 
@@ -108,9 +116,9 @@ ax[0].set_ylabel('Visibilities Squared')
 ax[0].set_yscale('log', base=10)
 
 #Closure Phases plot
-"""ax[1].plot(spatialFrequencies, closurePhases, '.')
-ax[1].errorbar(spatialFrequencies, closurePhases, yerr=closurePhasesErr, fmt = '.')
-ax[1].set_ylabel('Closure Phases (degrees)')"""
+ax[1].plot(spatialFrequenciesClosurePhases, closurePhases, '.')
+ax[1].errorbar(spatialFrequenciesClosurePhases, closurePhases, yerr=closurePhasesErr, fmt = '.')
+ax[1].set_ylabel('Closure Phases (degrees)')
 
 #Different alpha value plots
 """mew = np.arange(0, 1, .0001)
@@ -128,7 +136,7 @@ axTwo[0].set_ylabel('Intensity, I(r)')
 axTwo[1].set_ylabel('Intensity, I(r)')
 """
 #uniform disk chisquared values plot
-chiSquareValuesList = list(chiSquareValues.values())
+"""chiSquareValuesList = list(chiSquareValues.values())
 i = 0
 while i < np.size(chiSquareValuesList):
     if(chiSquareValuesList[i] > 500):
@@ -140,7 +148,7 @@ figThree, axThree = plt.subplots()
 axThree.plot(list(chiSquareValues.keys()), chiSquareValuesList)
 axThree.set_xlabel("Angular Diameter in Milliarcseconds")
 axThree.set_ylabel("Chi Squared Value")
-axThree.set_title("Uniform Disk Model Chi Squared Values")
+axThree.set_title("Uniform Disk Model Chi Squared Values")"""
 
 #Plot models
 ax[0].plot(x, ((2*j1(np.pi*uniformDiskTheta*x*1e6))/(np.pi*uniformDiskTheta*x*1e6))**2, label='Uniform Disk Model') #uniform disk model
