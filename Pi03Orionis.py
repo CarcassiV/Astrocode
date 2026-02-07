@@ -100,7 +100,7 @@ limbdarkenedTheta, alpha = limbdarkenedThetaTest(visibilitiesSquared, visibiliti
 print("Limb darkened theta", limbdarkenedTheta/((1/1000)*(1/60)*(1/60)*(np.pi/180)))
 print("Limb darkened coefficient", alpha)
 
-uniformDiskTheta = 1.4845949999999937*((1/1000)*(1/60)*(1/60)*(np.pi/180)) #1.4845949999999937
+uniformDiskTheta = 1.4845949*((1/1000)*(1/60)*(1/60)*(np.pi/180)) #1.4845949999999937
 limbdarkenedTheta = 1.52*((1/1000)*(1/60)*(1/60)*(np.pi/180)) #theta of 1.52, alpha of 0.13
 alpha = 0.13
 

@@ -11,21 +11,17 @@ import oifitsTools
         Teff: 6154 [6150, 6158] K
         log(g): 4.031 [4.025, 4.044] log(cm s-2)
 
-        From Gaia data, from Gaia FGK benchmark stars paper, doi: 10.1051/0004-6361/202347136 
-        Limb darkened angular diameter: 1.526 milliarc seconds
-        Teff: 6518 K
-        Parallax: 124.62 milliarc seconds
-        Bolometric Flux: 139.928e-11 (also option of "bolometric flux 0 extinction"?)
-        Luminosity: 2.816 solar luminosity
-        Linear Radius: 1.317 solar radius
-        Mass (from BaSTI): 1.280 solar mass
-        Mass (from STA): 1.288 solar mass
-        log(g): 4.31 log(cm/s^2)
+        From SPORES catalogue, v2.1.0
+        Teff = 6443 K from 2022
+        TeffErr = 14
+        Distance = 8.0684 parsecs
+        Parallax = 123.94 mas from 2007 tho
+        ParallaxErr = .17 mas
 
         PMOIRed, Antoine Me'rand
 
 """
-# Solar parameters (for conversion)
+# Solar parameters (for conversion), from internet
 solarLuminosityWatts = 3.828e26 # Watts
 solarRadiusKm = 695700 # Km
 solarMassKg = 1.988e30 # Kg
@@ -71,5 +67,3 @@ gravitationalConstant = 6.67408e-11 #m^3 kg^-1 s^-2
 surfaceGravityM = (gravitationalConstant*massKg)/((radiusKm/1000)**2)
 surfaceGravityCm = surfaceGravityM
 print("Surface Gravity log(g):", np.log10(surfaceGravityCm), "cm s^-2")
-
-
