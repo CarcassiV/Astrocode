@@ -83,22 +83,19 @@ while i < np.size(oifitsobj.t3):
 
 visibilitiesSquared = flatten(twoDVisibilities)
 print(len(visibilitiesSquared))
-visibilitiesNotSquared = flatten(twoDVisibilitiesNotSquared)
 visibilitiesSquaredErr = flatten(twoDVisibilitiesError)
-visibilitiesNotSquaredErr = flatten(twoDVisibilitiesNotSquaredErr)
 spatialFrequencies = flatten(twoDSpatialFrequency)
 print(len(spatialFrequencies))
 closurePhases = flatten(twoDClosurePhases)
 closurePhasesErr = flatten(twoDClosurePhasesErrors)
 spatialFrequenciesClosurePhases = flatten(twoDSpatialFrequencyClosurePhases)
 print(len(closurePhases))
-
-#uniformDiskTheta, uniformDiskError, chiSquareValues, visibilityAtCenter, visibilityAtCenterError = uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 1)
+#uniformDiskTheta, uniformDiskError, chiSquareValues, visibilityAtCenter, visibilityAtCenterError = uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 1000)
 #print("Uniform Disk Theta:", uniformDiskTheta, " Error:", uniformDiskError, "Visibility at Center:", visibilityAtCenter, "Error:", visibilityAtCenterError)
 
-limbdarkenedTheta, alpha = limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 1)
-print("Limb darkened theta", limbdarkenedTheta/((1/1000)*(1/60)*(1/60)*(np.pi/180)))
-print("Limb darkened coefficient", alpha)
+#limbdarkenedTheta, alpha = limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 1)
+#print("Limb darkened theta", limbdarkenedTheta/((1/1000)*(1/60)*(1/60)*(np.pi/180)))
+#print("Limb darkened coefficient", alpha)
 
 uniformDiskTheta = 1.4845949*((1/1000)*(1/60)*(1/60)*(np.pi/180)) #1.4845949999999937
 limbdarkenedTheta = 1.52*((1/1000)*(1/60)*(1/60)*(np.pi/180)) #theta of 1.52, alpha of 0.13
@@ -109,14 +106,12 @@ x = np.arange(10, 225, .2) #for the visibility squared curve
 #Visibility Squared plot
 fig, ax = plt.subplots(2,1, sharex=True)
 print("about to plot")
-ax[0].plot(spatialFrequencies, visibilitiesSquared, '.')
 ax[0].errorbar(spatialFrequencies, visibilitiesSquared, yerr=visibilitiesSquaredErr, fmt = '.')
 ax[1].set_xlabel('Spatial Frequency (Mλ)(baseline/wavelength)')
 ax[0].set_ylabel('Visibilities Squared')
 ax[0].set_yscale('log', base=10)
 
 #Closure Phases plot
-ax[1].plot(spatialFrequenciesClosurePhases, closurePhases, '.')
 ax[1].errorbar(spatialFrequenciesClosurePhases, closurePhases, yerr=closurePhasesErr, fmt = '.')
 ax[1].set_ylabel('Closure Phases (degrees)')
 

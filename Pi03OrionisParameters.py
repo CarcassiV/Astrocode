@@ -12,14 +12,15 @@ import oifitsTools
         log(g): 4.031 [4.025, 4.044] log(cm s-2)
 
         From SPORES catalogue, v2.1.0
-        Teff = 6443 K from 2022
-        TeffErr = 14
         Distance = 8.0684 parsecs
         Parallax = 123.94 mas from 2007 tho
         ParallaxErr = .17 mas
+        Teff = 6443 K from 2022
+        TeffErr = 14
+        Radius = 1.321 solar radiuses
+        Theta = 1.523 mas (no )
 
         PMOIRed, Antoine Me'rand
-
 """
 # Solar parameters (for conversion), from internet
 solarLuminosityWatts = 3.828e26 # Watts
@@ -29,9 +30,9 @@ solarMassKg = 1.988e30 # Kg
 angularDiameterRadian = oifitsTools.convertMilliArcSecToRadian(1.52)
 angularDiameterRadianErr = .0001 # have to still calculate this, filler number
 
-# From Gaia EDR3 data
-parallaxRadian = oifitsTools.convertMilliArcSecToRadian(124.6198)
-parallaxRadianErr = 0.2246
+# From SPORES Catalogue
+parallaxRadian = oifitsTools.convertMilliArcSecToRadian(123.94)
+parallaxRadianErr = 0.17
 
 # From Gaia data, from Gaia FGK benchmark stars paper, doi: 10.1051/0004-6361/202347136 
 bolometricFlux = 139.928e-11 # Watt per square meter
@@ -64,6 +65,9 @@ print("Effective Temperature, ", effTemp, "Kelvin")
 
 gravitationalConstant = 6.67408e-11 #m^3 kg^-1 s^-2
 
-surfaceGravityM = (gravitationalConstant*massKg)/((radiusKm/1000)**2)
-surfaceGravityCm = surfaceGravityM
+surfaceGravityM = (gravitationalConstant*massKg)/((radiusKm*1000)**2)
+surfaceGravityCm = surfaceGravityM*(100)
 print("Surface Gravity log(g):", np.log10(surfaceGravityCm), "cm s^-2")
+
+# How to find rotational period for my star?
+

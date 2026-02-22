@@ -28,13 +28,12 @@ def uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spat
     thetas = []
     visibilitiesAtCenter = []
     #for each visibility, randomly sample a point on the error bar
-    for n in range(0, numberOfTrials):
+    for n in range(0, numberOfTrials+1):
         sampleVisibilities = []
-        """for i in range(0, np.size(visibilitiesSquared)):
+        for i in range(0, np.size(visibilitiesSquared)):
             randomVisibilitySquaredSample = random.gauss(visibilitiesSquared[i], visibilitiesSquaredErr[i])
-            sampleVisibilities.append(randomVisibilitySquaredSample)"""
+            sampleVisibilities.append(randomVisibilitySquaredSample)
         chiSquareValues = {}
-        sampleVisibilities = visibilitiesSquared
 
         bottomThetaRange = 1.4
         topThetaRange = 1.55
@@ -52,7 +51,7 @@ def uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spat
                 if not np.isnan(chiSquareValue):
                     chiSquare += chiSquareValue
                 j += 1
-            print('Theta:', thetaRadians[i]/((1/1000)*(1/60)*(1/60)*(np.pi/180)), ', Chi Squared Value:', chiSquare)
+            #print('Theta:', thetaRadians[i]/((1/1000)*(1/60)*(1/60)*(np.pi/180)), ', Chi Squared Value:', chiSquare)
             chiSquareValues.update({thetaRadians[i]/((1/1000)*(1/60)*(1/60)*(np.pi/180)): chiSquare})
             i += 1
         thetas.append(min(chiSquareValues, key=chiSquareValues.get))
@@ -97,6 +96,57 @@ def uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spat
     return theta, thetaError, chiSquareValues, visibilityAtCenter, visibilityAtCenterError
 
 
+def uniformDiskFitBootstrap(visibilitiesSquared, spatialFrequencies, numberOfTrials):
+    #makes a dictionary where each visibility will correspond with a certain spatial frequency
+    visDict = {}
+    for i in range(0, np.size(spatialFrequencies)):
+        if not np.isnan(visibilitiesSquared[i]):
+            visDict.update({visibilitiesSquared[i]:spatialFrequencies[i]})
+
+    thetas = []
+    #for each visibility, randomly sample a point on the error bar
+    for i in range(0, numberOfTrials):
+        sampleVisibilities = []
+        for i in range(0, np.size(visibilitiesSquared)):
+            randomVisibilitySample = visibilitiesSquared[random.randint(0, np.size(visibilitiesSquared)-1)]
+            if not np.isnan(randomVisibilitySample):
+                sampleVisibilities.append(randomVisibilitySample)
+        #with these points, for each theta from 1.7milliarc second to 2.7 milliarc second, calculate the 
+        #chi square value and find the optimal theta for that dataset
+        chiSquareValues = {}
+
+        thetaMilliArcSeconds = np.arange(1.7, 2.7, 0.0001)
+        thetaRadians = thetaMilliArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))
+        i = 0
+        while i < np.size(thetaRadians):
+            chiSquare = 0
+            j = 0
+            while j < np.size(sampleVisibilities):
+                observed = sampleVisibilities[j]
+                expected = ((2*jv(1, np.pi*thetaRadians[i]*visDict.get(sampleVisibilities[j])*1e6))/(np.pi*thetaRadians[i]*visDict.get(sampleVisibilities[j])*1e6))**2
+                chiSquareValue = ((observed-expected)**2)/expected
+                if not np.isnan(chiSquareValue):
+                    chiSquare += chiSquareValue
+                j += 1
+            print('Theta:', thetaRadians[i], ', Chi Squared Value:', chiSquare)
+            chiSquareValues.update({thetaRadians[i]: chiSquare})
+            i+=1
+        thetas.append((min(chiSquareValues, key=chiSquareValues.get)))
+        print(min(chiSquareValues, key=chiSquareValues.get)/((1/1000)*(1/60)*(1/60)*(np.pi/180))) 
+        #repeat number of trials amount of times
+    #take the average of all the theta
+    print("done")
+    i = 0
+    sum = 0
+    while i < np.size(thetas):
+        sum += thetas[i]
+        i += 1
+    theta = sum/np.size(thetas)
+    print(theta)
+    return theta
+
+
+
 #limb-darkened model angular diameter
 def limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, numberOfTrials):
     chiSquareTestValues = []
@@ -104,10 +154,9 @@ def limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFr
     
     for n in range(0, numberOfTrials):
         sampleVisibilitiesSquared = []
-        """for i in range(0, np.size(visibilitiesSquared)):
+        for i in range(0, np.size(visibilitiesSquared)):
             randomVisibilitySquaredSample = random.gauss(visibilitiesSquared[i], visibilitiesSquaredErr[i])
-            sampleVisibilitiesSquared.append(randomVisibilitySquaredSample)"""
-        sampleVisibilitiesSquared = visibilitiesSquared
+            sampleVisibilitiesSquared.append(randomVisibilitySquaredSample)
 
         bottomThetaRange = 1.51
         topThetaRange = 1.535
@@ -117,7 +166,7 @@ def limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFr
         i = 0
         while i < np.size(thetaRadians): #are there libraries that already run chi square tests? More efficient than mine perhaps?
             j = 0
-            minChiSquareTestResultForATheta = chiSquareTestResult(0,.5,1e10)
+            minChiSquareTestResultForATheta = chiSquareTestResult(0.0,.5,1e10)
 
             bottomAlphaRange = 0.1
             topAlphaRange = 0.25
