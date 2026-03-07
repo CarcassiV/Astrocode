@@ -9,6 +9,63 @@ import sympy as sp
 import random
 from oifitsTools import uniformDiskFitErrorBarTest, limbdarkenedThetaTest
 
+
+def flatten(ndarr): #assumes each row is of the same length
+    rows = len(ndarr)
+    cols = len(ndarr[0])
+    flatarr = []
+    for i in range(0,rows):
+        for j in range(0,cols):
+            flatarr.append(ndarr[i][j])
+    return flatarr
+
+oifitsSigGem = oifits.open('2011Dec07.17ms.sigGem.oifits')
+
+twoDVisibilitiesSigGem = []
+i = 0
+while i < np.size(oifitsSigGem.vis2):
+    twoDVisibilitiesSigGem.append(np.ma.getdata(oifitsSigGem.vis2[i].vis2data))
+    i += 1
+
+twoDVisibilitiesErrorSigGem = []
+i = 0
+while i < np.size(oifitsSigGem.vis2):
+    twoDVisibilitiesErrorSigGem.append(np.ma.getdata(oifitsSigGem.vis2[i].vis2err))
+    i += 1
+
+twoDClosurePhasesSigGem = []
+i = 0
+while i < np.size(oifitsSigGem.t3):
+    twoDClosurePhasesSigGem.append(np.ma.getdata(oifitsSigGem.t3[i].t3phi))
+    i += 1
+
+twoDClosurePhasesErrorsSigGem = []
+i = 0
+while i < np.size(oifitsSigGem.t3):
+    twoDClosurePhasesErrorsSigGem.append(np.ma.getdata(oifitsSigGem.t3[i].t3phierr))
+    i += 1
+
+twoDSpatialFrequencySigGem = []
+i = 0
+while i < np.size(oifitsSigGem.vis2):
+    twoDSpatialFrequencySigGem.append(np.sqrt((oifitsSigGem.vis2[i].ucoord)**2 + (oifitsSigGem.vis2[i].vcoord)**2)/oifitsSigGem.vis2[i].wavelength.eff_wave/1e6)
+    i += 1 
+
+
+twoDSpatialFrequencyClosurePhasesSigGem = []
+i = 0
+while i < np.size(oifitsSigGem.t3):
+    twoDSpatialFrequencyClosurePhasesSigGem.append(np.sqrt((oifitsSigGem.t3[i].u1coord)**2 + (oifitsSigGem.t3[i].v1coord)**2)/oifitsSigGem.t3[i].wavelength.eff_wave/1e6)
+    i += 1
+
+visibilitiesSquaredSigGem = flatten(twoDVisibilitiesSigGem)
+visibilitiesSquaredErrSigGem = flatten(twoDVisibilitiesErrorSigGem)
+spatialFrequenciesSigGem = flatten(twoDSpatialFrequencySigGem)
+spatialFrequenciesClosurePhasesSigGem = flatten(twoDSpatialFrequencyClosurePhasesSigGem)
+closurePhasesSigGem = flatten(twoDClosurePhasesSigGem)
+closurePhasesErrSigGem = flatten(twoDClosurePhasesErrorsSigGem)
+
+
 hdulist = fits.open('MIRC_L2.2025Sep21.pi03_Ori.MIRCX_IDL.RMR_deepedge.AVG5m.oifits')
 hdulist['OI_ARRAY'].header['OI_REVN'] = 1
 oifitsobj = oifits.open(hdulist)
@@ -23,15 +80,6 @@ oifitsobj = oifits.open(hdulist)
 #   Conduct a literature review and compile a list of stellar parameters for pi03Ori
 #   Solve for my own parameters
 #   Figure out how to use Candid to look for a binary, keep good data about the results
-
-def flatten(ndarr): #assumes each row is of the same length
-    rows = len(ndarr)
-    cols = len(ndarr[0])
-    flatarr = []
-    for i in range(0,rows):
-        for j in range(0,cols):
-            flatarr.append(ndarr[i][j])
-    return flatarr
 
 twoDVisibilities = []
 i = 0
@@ -93,9 +141,9 @@ print(len(closurePhases))
 #uniformDiskTheta, uniformDiskError, chiSquareValues, visibilityAtCenter, visibilityAtCenterError = uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 1000)
 #print("Uniform Disk Theta:", uniformDiskTheta, " Error:", uniformDiskError, "Visibility at Center:", visibilityAtCenter, "Error:", visibilityAtCenterError)
 
-#limbdarkenedTheta, alpha = limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 1)
-#print("Limb darkened theta", limbdarkenedTheta/((1/1000)*(1/60)*(1/60)*(np.pi/180)))
-#print("Limb darkened coefficient", alpha)
+limbdarkenedTheta, alpha = limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 1000)
+print("Limb darkened theta", limbdarkenedTheta/((1/1000)*(1/60)*(1/60)*(np.pi/180)))
+print("Limb darkened coefficient", alpha)
 
 uniformDiskTheta = 1.4845949*((1/1000)*(1/60)*(1/60)*(np.pi/180)) #1.4845949999999937
 limbdarkenedTheta = 1.52*((1/1000)*(1/60)*(1/60)*(np.pi/180)) #theta of 1.52, alpha of 0.13
@@ -158,6 +206,11 @@ while i < np.size(x):
 
 ax[0].plot(x, limbDarkenedValues, label='Limb Darkened Model')
 ax[0].legend()
+
+# Sigma Gem
+"""ax[0].errorbar(spatialFrequenciesSigGem, visibilitiesSquaredSigGem, yerr=visibilitiesSquaredErrSigGem, fmt = '*')
+
+ax[1].errorbar(spatialFrequenciesClosurePhasesSigGem, closurePhasesSigGem, yerr=closurePhasesErrSigGem, fmt = '*')"""
 
 plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.01, hspace=.085)
 plt.show()

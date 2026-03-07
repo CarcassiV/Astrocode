@@ -1,13 +1,9 @@
-import time
- 
-start_time = time.time()
-for i in range(1000000):
-    print(i)
-end_time = time.time()
-print(f"Time taken with print: {end_time - start_time} seconds")
- 
-start_time = time.time()
-for i in range(1000000):
-    pass
-end_time = time.time()
-print(f"Time taken without print: {end_time - start_time} seconds")
+import csv
+with open('trialData.csv', 'w', newline='') as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerow(['Trial', 'Angular Diameter', 'Alpha Value'])
+
+with open('trialData.csv', 'a', newline='') as file:
+    writer = csv.writer(file)
+    writer.writerow(['4', '1.52', '0.13'])
+    writer.writerow(['5', '1.5', '.1'])

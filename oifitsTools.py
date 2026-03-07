@@ -6,6 +6,7 @@ import scipy.integrate as integrate
 from dataclasses import dataclass
 from typing import Self
 import sympy as sp
+import csv
 
 def convertMilliArcSecToRadian(num):
     return num*((1/1000)*(1/60)*(1/60)*(np.pi/180))
@@ -149,17 +150,26 @@ def uniformDiskFitBootstrap(visibilitiesSquared, spatialFrequencies, numberOfTri
 
 #limb-darkened model angular diameter
 def limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, numberOfTrials):
-    chiSquareTestValues = []
-    minChiSquareTestResultForATheta = chiSquareTestResult(0,.5,1e10)
+    # Make CSV file to store trial results, that way even if code crashes, we have some results.
+    with open('trialData.csv', 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['Trial', 'Angular Diameter', 'Alpha Value', 'Chi-Squared Value'])
+
+    minChiSquareTestResults = []
     
     for n in range(0, numberOfTrials):
         sampleVisibilitiesSquared = []
+        minChiSquareTestResultForATrial = chiSquareTestResult(0,.5,1e10)
+
+
         for i in range(0, np.size(visibilitiesSquared)):
             randomVisibilitySquaredSample = random.gauss(visibilitiesSquared[i], visibilitiesSquaredErr[i])
             sampleVisibilitiesSquared.append(randomVisibilitySquaredSample)
 
         bottomThetaRange = 1.51
-        topThetaRange = 1.535
+        topThetaRange = 1.525
+        
+        # Add another parameter V0, which varies from .95-1.05 (check if hits edge). expected = V0*(current function)
         
         thetaMilliArcSeconds = np.arange(bottomThetaRange, topThetaRange, 0.001)
         thetaRadians = thetaMilliArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))
@@ -169,7 +179,7 @@ def limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFr
             minChiSquareTestResultForATheta = chiSquareTestResult(0.0,.5,1e10)
 
             bottomAlphaRange = 0.1
-            topAlphaRange = 0.25
+            topAlphaRange = 0.2
 
             alpha = np.arange(bottomAlphaRange, topAlphaRange, 0.01)
             while j < np.size(alpha):
@@ -189,29 +199,27 @@ def limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFr
                 if (chiSquare < minChiSquareTestResultForATheta.chiSquare): #I compare every theta and alpha pair, is it more efficient to store them all and sort/compare at end to find min?
                     minChiSquareTestResultForATheta = chiSquareTestResult(thetaRadians[i], alpha[j], chiSquare)
                 j += 1
-            print(minChiSquareTestResultForATheta)
-            chiSquareTestValues.append(minChiSquareTestResultForATheta)
-            #print(chiSquareTestValues)
-            """if(minChiSquareTestResultForATheta.alpha == bottomAlphaRange or minChiSquareTestResultForATheta.alpha == topAlphaRange):
-                print("Expand alpha range, stopping loop")
-                break"""
+            if(minChiSquareTestResultForATheta.chiSquare < minChiSquareTestResultForATrial.chiSquare):
+                minChiSquareTestResultForATrial = minChiSquareTestResultForATheta
             i += 1
-        #Test if this every hits the extreme values of theta, if so expand the range
-        """if(minChiSquareTestResultForATheta.angularDiameter/((1/1000)*(1/60)*(1/60)*(np.pi/180)) == bottomThetaRange or minChiSquareTestResultForATheta.angularDiameter/((1/1000)*(1/60)*(1/60)*(np.pi/180)) == topThetaRange):
-                print("Expand theta range, stopping loop")
-                break"""
+        print(minChiSquareTestResultForATrial)
+        minChiSquareTestResults.append(minChiSquareTestResultForATrial)
+
+        with open('trialData.csv', 'a', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow([n, minChiSquareTestResultForATrial.angularDiameter/((1/1000)*(1/60)*(1/60)*(np.pi/180)), minChiSquareTestResultForATrial.alpha, minChiSquareTestResultForATrial.chiSquare])
+
         n += 1
+
     print('done')
     i=0
     min = chiSquareTestResult(0,0,1e10)
-    while i < np.size(chiSquareTestValues):
-        if chiSquareTestValues[i].chiSquare < min.chiSquare:
-            min = chiSquareTestValues[i]
+    while i < np.size(minChiSquareTestResults):
+        if minChiSquareTestResults[i].chiSquare < min.chiSquare:
+            min = minChiSquareTestResults[i]
             print('computing')
         i += 1
-    print(min)
-
-    
+    print(min)    
 
     theta = min.angularDiameter
     alpha = min.alpha

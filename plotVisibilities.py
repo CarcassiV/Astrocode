@@ -294,7 +294,7 @@ print("about to plot")
 #ax[0].plot(x, ((2*jv(1, np.pi*thetaSigGem*x*1e6))/(np.pi*thetaSigGem*x*1e6))**2)
 ax[0].errorbar(spatialFrequenciesSigGem, visibilitiesSquaredSigGem, yerr=visibilitiesSquaredErrSigGem, fmt = '*')
 ax[0].set_ylabel('Visibilities Squared')
-ax[0].set_yscale('log', base=10)
+#ax[0].set_yscale('log', base=10)
 
 #ax[0].plot(spatialFrequenciesPiOri, visibilitiesSquaredPiOri, '.')
 ax[0].errorbar(spatialFrequenciesPiOri, visibilitiesSquaredPiOri, yerr=visibilitiesSquaredErrPiOri, fmt = '.')
@@ -315,7 +315,7 @@ ax[1].set_ylabel('Closure Phases (degrees)')
 
 ax[1].errorbar(spatialFrequenciesClosurePhasesPiOri, closurePhasesPiOri, yerr=closurePhasesErrPiOri, fmt = '.')
 
-"""mew = np.arange(0, 1, .0001)
+mew = np.arange(0, 1, .0001)
 r = np.arange(0, 1, 0.0001)
 limbDarkeningCoefficient = [0, 0.2, 0.5, 1, 1.5, 3, 7]
 
@@ -327,7 +327,7 @@ for i in range(0, np.size(limbDarkeningCoefficient)):
 axTwo[0].set_xlabel('μ')
 axTwo[1].set_xlabel('r')
 axTwo[0].set_ylabel('Intensity, I(r)')
-axTwo[1].set_ylabel('Intensity, I(r)')"""
+axTwo[1].set_ylabel('Intensity, I(r)')
 
 plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.01, hspace=.085)
 plt.show()
