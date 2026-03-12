@@ -27,14 +27,15 @@ class chiSquareTestResult:
 #uniform disk model angular diameter
 def uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, numberOfTrials):
     thetas = []
-    visibilitiesAtCenter = []
     #for each visibility, randomly sample a point on the error bar
-    for n in range(0, numberOfTrials+1):
+    for n in range(0, numberOfTrials):
         sampleVisibilities = []
         for i in range(0, np.size(visibilitiesSquared)):
             randomVisibilitySquaredSample = random.gauss(visibilitiesSquared[i], visibilitiesSquaredErr[i])
             sampleVisibilities.append(randomVisibilitySquaredSample)
         chiSquareValues = {}
+
+        sampleVisibilities = visibilitiesSquared
 
         bottomThetaRange = 1.4
         topThetaRange = 1.55
@@ -57,10 +58,6 @@ def uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spat
             i += 1
         thetas.append(min(chiSquareValues, key=chiSquareValues.get))
         print("Trial Number:", n, "Theta:", min(chiSquareValues, key=chiSquareValues.get)) 
-
-        """x = sp.symbols('x')
-        equation = ((2*sp.besselj(np.pi*min(chiSquareValues, key=chiSquareValues.get)*x*1e6, 1))/(np.pi*min(chiSquareValues, key=chiSquareValues.get)*x*1e6))**2
-        visibilitiesAtCenter.append(sp.limit(equation, x, 0))"""
         
         #Test if this ever hits the extreme values of theta, if so expand the range. Try to make range as small as possible to save time
         if(min(chiSquareValues, key=chiSquareValues.get) == bottomThetaRange or min(chiSquareValues, key=chiSquareValues.get) == topThetaRange):
@@ -80,21 +77,92 @@ def uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spat
     #The error is calculated from the standard deviation of the trials
     thetaError = np.std(thetas)
 
-    """i = 0
-    sum = 0
-    while i < np.size(visibilitiesAtCenter):
-        sum += visibilitiesAtCenter[i]
+    return theta, thetaError, chiSquareValues
+
+
+"""
+    Ideas to make the code more efficient:
+    - Write to the csv file less often?
+    - Explore chi squared libraries? scipy.stats.chisquare? For the goodness of fit test? https://www.statology.org/how-to-conduct-chi-square-tests-scipy/ 
+    - Write down all the steps and see if there are unnecessary arrays or the like
+
+"""
+
+
+def uniformDiskFitErrorBarTestWithCenterVisibility(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, numberOfTrials):
+    # Make CSV file to store trial results, that way even if code crashes, we have some results.
+    with open('trialData.csv', 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['Trial', 'Angular Diameter', 'Visibility Value', 'Chi-Squared Value'])
+
+    minChiSquareTestResults = []
+    
+    for n in range(0, numberOfTrials):
+        sampleVisibilitiesSquared = []
+        minChiSquareTestResultForATrial = chiSquareTestResult(0,.5,1e10)
+
+        for i in range(0, np.size(visibilitiesSquared)):
+            randomVisibilitySquaredSample = random.gauss(visibilitiesSquared[i], visibilitiesSquaredErr[i])
+            sampleVisibilitiesSquared.append(randomVisibilitySquaredSample)
+
+
+        bottomThetaRange = 1.4
+        topThetaRange = 1.55
+        
+        # Add another parameter V0, which varies from .95-1.05 (check if hits edge). expected = V0*(current function)
+        
+        thetaMilliArcSeconds = np.arange(bottomThetaRange, topThetaRange, 0.001)
+        thetaRadians = thetaMilliArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))
+
+        minChiSquareTestResultForATheta = chiSquareTestResult(0.0,.5,1e10)
+
+        bottomVisibilityRange = .95
+        topVisibilityRange = 1.05
+
+        visibilityRange = np.arange(bottomVisibilityRange, topVisibilityRange, 0.01)
+
+        i = 0
+        while i < np.size(thetaRadians): #are there libraries that already run chi square tests? More efficient than mine perhaps?
+            j = 0
+            while j < np.size(visibilityRange):
+                k = 0
+                chiSquare = 0
+                while k < np.size(sampleVisibilitiesSquared):
+                    observed = sampleVisibilitiesSquared[k]
+                    expected = visibilityRange[j]*((2*j1(np.pi*thetaRadians[i]*spatialFrequencies[k]*1e6))/(np.pi*thetaRadians[i]*spatialFrequencies[k]*1e6))**2
+                    chiSquareValue = ((observed-expected)**2)/expected
+                    if not np.isnan(chiSquareValue):
+                        chiSquare += chiSquareValue
+                    k += 1
+                #print("Theta value:", thetaRadians[i]/((1/1000)*(1/60)*(1/60)*(np.pi/180)), "visibility value:", visibilityRange[j], "chisquare:", chiSquare)
+                if (chiSquare < minChiSquareTestResultForATheta.chiSquare):
+                    minChiSquareTestResultForATheta = chiSquareTestResult(thetaRadians[i], visibilityRange[j], chiSquare)
+                j += 1
+            if(minChiSquareTestResultForATheta.chiSquare < minChiSquareTestResultForATrial.chiSquare):
+                minChiSquareTestResultForATrial = minChiSquareTestResultForATheta
+            i += 1
+        #print(minChiSquareTestResultForATrial)
+        minChiSquareTestResults.append(minChiSquareTestResultForATrial)
+
+        with open('trialData.csv', 'a', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow([n, minChiSquareTestResultForATrial.angularDiameter/((1/1000)*(1/60)*(1/60)*(np.pi/180)), minChiSquareTestResultForATrial.alpha, minChiSquareTestResultForATrial.chiSquare])
+
+        n += 1
+
+    print('done')
+    i=0
+    min = chiSquareTestResult(0,0,1e10)
+    while i < np.size(minChiSquareTestResults):
+        if minChiSquareTestResults[i].chiSquare < min.chiSquare:
+            min = minChiSquareTestResults[i]
+            print('computing')
         i += 1
-    visibilityAtCenter = sum/np.size(visibilitiesAtCenter)
-    print(visibilityAtCenter)
+    print(min)
 
-    visibilityAtCenterError = np.std(visibilitiesAtCenter)
-    print(visibilityAtCenterError)"""
-
-    visibilityAtCenter = 0
-    visibilityAtCenterError = 0
-
-    return theta, thetaError, chiSquareValues, visibilityAtCenter, visibilityAtCenterError
+    theta = min.angularDiameter
+    visibility = min.alpha
+    return theta, visibility
 
 
 def uniformDiskFitBootstrap(visibilitiesSquared, spatialFrequencies, numberOfTrials):
@@ -147,7 +215,6 @@ def uniformDiskFitBootstrap(visibilitiesSquared, spatialFrequencies, numberOfTri
     return theta
 
 
-
 #limb-darkened model angular diameter
 def limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, numberOfTrials):
     # Make CSV file to store trial results, that way even if code crashes, we have some results.
@@ -173,19 +240,20 @@ def limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFr
         
         thetaMilliArcSeconds = np.arange(bottomThetaRange, topThetaRange, 0.001)
         thetaRadians = thetaMilliArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))
+
+        minChiSquareTestResultForATheta = chiSquareTestResult(0.0,.5,1e10)
+
+        bottomAlphaRange = 0.1
+        topAlphaRange = 0.2
+
+        alpha = np.arange(bottomAlphaRange, topAlphaRange, 0.01)
+
         i = 0
         while i < np.size(thetaRadians): #are there libraries that already run chi square tests? More efficient than mine perhaps?
             j = 0
-            minChiSquareTestResultForATheta = chiSquareTestResult(0.0,.5,1e10)
-
-            bottomAlphaRange = 0.1
-            topAlphaRange = 0.2
-
-            alpha = np.arange(bottomAlphaRange, topAlphaRange, 0.01)
             while j < np.size(alpha):
                 k = 0
                 chiSquare = 0
-                alphaValuesForOneTheta = {}
                 while k < np.size(sampleVisibilitiesSquared):
                     observed = sampleVisibilitiesSquared[k]
                     function = lambda r : ((1-r**2)**(alpha[j]/2))*j0(np.pi*thetaRadians[i]*r*spatialFrequencies[k]*1e6)*r
@@ -224,6 +292,3 @@ def limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFr
     theta = min.angularDiameter
     alpha = min.alpha
     return theta, alpha
-
-
-thetaMilliarcSeconds = 0 #get this once I run the limbdarkened fit

@@ -7,7 +7,7 @@ import scipy.integrate as integrate
 import scipy.stats as stats
 import sympy as sp
 import random
-from oifitsTools import uniformDiskFitErrorBarTest, limbdarkenedThetaTest
+from oifitsTools import limbdarkenedThetaTest, uniformDiskFitBootstrap, uniformDiskFitErrorBarTest, uniformDiskFitErrorBarTestWithCenterVisibility
 
 
 def flatten(ndarr): #assumes each row is of the same length
@@ -138,16 +138,19 @@ closurePhases = flatten(twoDClosurePhases)
 closurePhasesErr = flatten(twoDClosurePhasesErrors)
 spatialFrequenciesClosurePhases = flatten(twoDSpatialFrequencyClosurePhases)
 print(len(closurePhases))
-#uniformDiskTheta, uniformDiskError, chiSquareValues, visibilityAtCenter, visibilityAtCenterError = uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 1000)
-#print("Uniform Disk Theta:", uniformDiskTheta, " Error:", uniformDiskError, "Visibility at Center:", visibilityAtCenter, "Error:", visibilityAtCenterError)
+uniformDiskTheta, uniformDiskError, chiSquareValues = uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 1)
+print("Uniform Disk Theta:", uniformDiskTheta, " Error:", uniformDiskError)
 
-limbdarkenedTheta, alpha = limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 1000)
-print("Limb darkened theta", limbdarkenedTheta/((1/1000)*(1/60)*(1/60)*(np.pi/180)))
-print("Limb darkened coefficient", alpha)
+#uniformDiskTheta, visibility = uniformDiskFitErrorBarTestWithCenterVisibility(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 1)
+#print("Uniform Disk Theta:", uniformDiskTheta, "Visibility", visibility)
 
-uniformDiskTheta = 1.4845949*((1/1000)*(1/60)*(1/60)*(np.pi/180)) #1.4845949999999937
-limbdarkenedTheta = 1.52*((1/1000)*(1/60)*(1/60)*(np.pi/180)) #theta of 1.52, alpha of 0.13
-alpha = 0.13
+#limbdarkenedTheta, alpha = limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 2)
+#print("Limb darkened theta", limbdarkenedTheta/((1/1000)*(1/60)*(1/60)*(np.pi/180)))
+#print("Limb darkened coefficient", alpha)
+
+uniformDiskTheta = 1.485*((1/1000)*(1/60)*(1/60)*(np.pi/180)) 
+limbdarkenedTheta = 1.511*((1/1000)*(1/60)*(1/60)*(np.pi/180)) 
+alpha = 0.10
 
 x = np.arange(10, 225, .2) #for the visibility squared curve
 
