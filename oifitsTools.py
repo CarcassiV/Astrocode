@@ -1,4 +1,6 @@
 import numpy as np
+from astropy.io import fits
+import oifits
 import matplotlib.pyplot as plt
 from scipy.special import jv, j0, j1
 from scipy.stats import chisquare
@@ -23,6 +25,67 @@ class chiSquareTestResult:
             return other
         else:
             return self
+
+def openFile(fileName):
+
+    def flatten(ndarr): #assumes each row is of the same length
+        rows = len(ndarr)
+        cols = len(ndarr[0])
+        flatarr = []
+        for i in range(0,rows):
+            for j in range(0,cols):
+                flatarr.append(ndarr[i][j])
+        return flatarr
+
+    hdulist = fits.open(fileName)
+    hdulist['OI_ARRAY'].header['OI_REVN'] = 1
+    oifitsobj = oifits.open(hdulist)
+
+    twoDVisibilities = []
+    i = 0
+    while i < np.size(oifitsobj.vis2):
+        twoDVisibilities.append(np.ma.getdata(oifitsobj.vis2[i].vis2data))
+        i += 1
+
+    twoDVisibilitiesError = []
+    i = 0
+    while i < np.size(oifitsobj.vis2):
+        twoDVisibilitiesError.append(np.ma.getdata(oifitsobj.vis2[i].vis2err))
+        i += 1
+
+    twoDClosurePhases = []
+    i = 0
+    while i < np.size(oifitsobj.t3):
+        twoDClosurePhases.append(np.ma.getdata(oifitsobj.t3[i].t3phi))
+        i += 1
+
+    twoDClosurePhasesErrors = []
+    i = 0
+    while i < np.size(oifitsobj.t3):
+        twoDClosurePhasesErrors.append(np.ma.getdata(oifitsobj.t3[i].t3phierr))
+        i += 1
+
+    twoDSpatialFrequency = []
+    i = 0
+    while i < np.size(oifitsobj.vis2):
+        twoDSpatialFrequency.append(np.sqrt((oifitsobj.vis2[i].ucoord)**2 + (oifitsobj.vis2[i].vcoord)**2)/oifitsobj.vis2[i].wavelength.eff_wave/1e6)
+        i += 1
+
+    twoDSpatialFrequencyClosurePhases = []
+    i = 0
+    while i < np.size(oifitsobj.t3):
+        twoDSpatialFrequencyClosurePhases.append(np.sqrt((oifitsobj.t3[i].u1coord)**2 + (oifitsobj.t3[i].v1coord)**2)/oifitsobj.t3[i].wavelength.eff_wave/1e6)
+        i += 1
+    
+    visibilitiesSquared = flatten(twoDVisibilities)
+    visibilitiesSquaredErr = flatten(twoDVisibilitiesError)
+    spatialFrequencies = flatten(twoDSpatialFrequency)
+    closurePhases = flatten(twoDClosurePhases)
+    closurePhasesErr = flatten(twoDClosurePhasesErrors)
+    spatialFrequenciesClosurePhases = flatten(twoDSpatialFrequencyClosurePhases)
+    
+    return visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, spatialFrequenciesClosurePhases, closurePhases, closurePhasesErr
+
 
 #31.48s for 10 trials with only calculating up to 3 chi squared
 #1min 18secs for 10 trials from before

@@ -19,7 +19,7 @@ def flatten(ndarr): #assumes each row is of the same length
             flatarr.append(ndarr[i][j])
     return flatarr
 
-oifitsSigGem = oifits.open('2011Dec07.17ms.sigGem.oifits')
+oifitsSigGem = oifits.open('CHARAData/2011Dec07.17ms.sigGem.oifits')
 
 twoDVisibilitiesSigGem = []
 i = 0
@@ -66,7 +66,7 @@ closurePhasesSigGem = flatten(twoDClosurePhasesSigGem)
 closurePhasesErrSigGem = flatten(twoDClosurePhasesErrorsSigGem)
 
 
-hdulist = fits.open('MIRC_L2.2025Sep21.pi03_Ori.MIRCX_IDL.RMR_deepedge.AVG5m.oifits')
+hdulist = fits.open('CHARADataPiOri/MIRC_L2.2025Sep21.pi03_Ori.MIRCX_IDL.RMR_deepedge.AVG5m.oifits')
 hdulist['OI_ARRAY'].header['OI_REVN'] = 1
 oifitsobj = oifits.open(hdulist)
 
