@@ -138,19 +138,20 @@ closurePhases = flatten(twoDClosurePhases)
 closurePhasesErr = flatten(twoDClosurePhasesErrors)
 spatialFrequenciesClosurePhases = flatten(twoDSpatialFrequencyClosurePhases)
 print(len(closurePhases))
-uniformDiskTheta, uniformDiskError, chiSquareValues = uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 1)
-print("Uniform Disk Theta:", uniformDiskTheta, " Error:", uniformDiskError)
 
-#uniformDiskTheta, visibility = uniformDiskFitErrorBarTestWithCenterVisibility(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 1)
+#uniformDiskTheta, uniformDiskError, chiSquareValues = uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 10)
+#print("Uniform Disk Theta:", uniformDiskTheta, " Error:", uniformDiskError)
+
+#uniformDiskTheta, visibility = uniformDiskFitErrorBarTestWithCenterVisibility(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 3)
 #print("Uniform Disk Theta:", uniformDiskTheta, "Visibility", visibility)
 
-#limbdarkenedTheta, alpha = limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 2)
-#print("Limb darkened theta", limbdarkenedTheta/((1/1000)*(1/60)*(1/60)*(np.pi/180)))
-#print("Limb darkened coefficient", alpha)
+limbdarkenedTheta, alpha = limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 2)
+print("Limb darkened theta", limbdarkenedTheta/((1/1000)*(1/60)*(1/60)*(np.pi/180)))
+print("Limb darkened coefficient", alpha)
 
 uniformDiskTheta = 1.485*((1/1000)*(1/60)*(1/60)*(np.pi/180)) 
-limbdarkenedTheta = 1.511*((1/1000)*(1/60)*(1/60)*(np.pi/180)) 
-alpha = 0.10
+limbdarkenedTheta = 1.485*((1/1000)*(1/60)*(1/60)*(np.pi/180)) 
+alpha = 0.0
 
 x = np.arange(10, 225, .2) #for the visibility squared curve
 

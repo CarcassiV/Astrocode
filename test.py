@@ -1,9 +1,8 @@
-import csv
-with open('trialData.csv', 'w', newline='') as csvfile:
-    writer = csv.writer(csvfile)
-    writer.writerow(['Trial', 'Angular Diameter', 'Alpha Value'])
+from scipy.stats import chisquare
 
-with open('trialData.csv', 'a', newline='') as file:
-    writer = csv.writer(file)
-    writer.writerow(['4', '1.52', '0.13'])
-    writer.writerow(['5', '1.5', '.1'])
+observed = [100e-20, 200e-20, 300e-20, 400e-20, 500e-20]
+expected = [3e-20, 3e-20, 3e-20, 3e-20, 3e-20]
+
+chisquare = chisquare(observed, expected)
+
+print(chisquare, pvalue)
