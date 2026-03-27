@@ -118,7 +118,7 @@ def uniformDiskFitBootstrap(visibilitiesSquared, spatialFrequencies, numberOfTri
     print(theta)
     return theta
 
-oifitsSigGem = oifits.open('2011Dec07.17ms.sigGem.oifits')
+oifitsSigGem = oifits.open('CHARADataSigGem/2011Dec07.17ms.sigGem.oifits')
 
 twoDVisibilitiesSigGem = []
 i = 0
@@ -156,15 +156,15 @@ while i < np.size(oifitsSigGem.t3):
     twoDSpatialFrequencyClosurePhasesSigGem.append(np.sqrt((oifitsSigGem.t3[i].u1coord)**2 + (oifitsSigGem.t3[i].v1coord)**2)/oifitsSigGem.t3[i].wavelength.eff_wave/1e6)
     i += 1
 
-visibilitiesSquaredSigGem = flatten(twoDVisibilitiesSigGem, 8, 8)
-visibilitiesSquaredErrSigGem = flatten(twoDVisibilitiesErrorSigGem, 8, 8)
-spatialFrequenciesSigGem = flatten(twoDSpatialFrequencySigGem, 8, 8)
-closurePhasesSigGem = flatten(twoDClosurePhasesSigGem, 5, 8)
-closurePhasesErrSigGem = flatten(twoDClosurePhasesErrorsSigGem, 5, 8)
-spatialFrequenciesClosurePhasesSigGem = flatten(twoDSpatialFrequencyClosurePhasesSigGem, 5, 8)
+visibilitiesSquared = flatten(twoDVisibilitiesSigGem, 8, 8)
+visibilitiesSquaredErr = flatten(twoDVisibilitiesErrorSigGem, 8, 8)
+spatialFrequencies = flatten(twoDSpatialFrequencySigGem, 8, 8)
+closurePhases = flatten(twoDClosurePhasesSigGem, 5, 8)
+closurePhasesErr = flatten(twoDClosurePhasesErrorsSigGem, 5, 8)
+spatialFrequenciesClosurePhases = flatten(twoDSpatialFrequencyClosurePhasesSigGem, 5, 8)
 
 
-hdulist = fits.open('MIRC_L2.2025Sep21.pi03_Ori.MIRCX_IDL.RMR_deepedge.AVG5m.oifits')
+hdulist = fits.open('CHARADataPiOri/MIRC_L2.2025Sep21.pi03_Ori.MIRCX_IDL.RMR_deepedge.AVG5m.oifits')
 hdulist['OI_ARRAY'].header['OI_REVN'] = 1
 oifitsobj = oifits.open(hdulist)
 
@@ -223,17 +223,19 @@ closurePhasesPiOri = flatten(twoDClosurePhases, 8, 8)
 closurePhasesErrPiOri = flatten(twoDClosurePhasesErrors, 8, 8)
 spatialFrequenciesClosurePhasesPiOri = flatten(twoDSpatialFrequencyClosurePhases, 8, 8)
 
-"""uniformDiskTheta = uniformDiskFitErrorBar(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 500)
+#uniformDiskTheta = uniformDiskFitErrorBar(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 500)
 
 chiSquareTestValues = []
 minChiSquareTestResultForATheta = chiSquareTestResult(0,.5,1e30)
 #limb-darkened model angular diameter
-for a in range(0, 10):
+for a in range(0, 1):
     sampleVisibilitiesSquared = []
     for i in range(0, np.size(visibilitiesSquared)):
         randomVisibilitySquaredSample = random.gauss(visibilitiesSquared[i], visibilitiesSquaredErr[i]) #should be normal distribution 
         sampleVisibilitiesSquared.append(randomVisibilitySquaredSample)
     sampleVisibilities = sampleVisibilitiesSquared
+
+    sampleVisibilities = visibilitiesSquared
     
     thetaMilliArcSeconds = np.arange(2.2, 2.45, 0.01)
     thetaRadians = thetaMilliArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))
@@ -280,7 +282,7 @@ while i < np.size(chiSquareTestValues):
     i += 1
 print(min)
 theta = min.angularDiameter
-alpha = min.alpha"""
+alpha = min.alpha
 
 thetaSigGem = 2.335*((1/1000)*(1/60)*(1/60)*(np.pi/180))
 limbDarkenedThetaSigGem = 2.4*((1/1000)*(1/60)*(1/60)*(np.pi/180))

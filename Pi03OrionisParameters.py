@@ -41,7 +41,7 @@ luminosityWatts = luminositySolar*solarLuminosityWatts
 massSolar = 1.280 # solar mass
 massKg = 1.280*solarMassKg
 
-
+# to get standard deviation of distance, do parallax + sigma to get distance1 and parallax-sigma to get distance 2. One sigma for distance is the difference of the two
 distanceParsecs = (1 / ((124.62)*(1/1000))) #distance from earth in parsecs
 print("Distance from Earth:", distanceParsecs, 'parsecs')
 distanceKm = 30856775812800*distanceParsecs

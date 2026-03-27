@@ -93,23 +93,23 @@ def openFile(fileName):
 #uniform disk model angular diameter
 def uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, numberOfTrials):
     # Make CSV file to store trial results, that way even if code crashes, we have some results.
-    with open('trialData.csv', 'w', newline='') as csvfile:
+    with open('uniformDiskFit.csv', 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(['Trial', 'Angular Diameter', 'Chi-Squared Value'])
 
     thetas = []
     #for each visibility, randomly sample a point on the error bar
     for n in range(0, numberOfTrials):
-        sampleVisibilities = []
+        """sampleVisibilities = []
         for i in range(0, np.size(visibilitiesSquared)):
             randomVisibilitySquaredSample = random.gauss(visibilitiesSquared[i], visibilitiesSquaredErr[i])
             sampleVisibilities.append(randomVisibilitySquaredSample)
         chiSquareValues = {}
 
-        sampleVisibilities = visibilitiesSquared
+        sampleVisibilities = visibilitiesSquared"""
 
-        bottomThetaRange = 1.4
-        topThetaRange = 1.55
+        bottomThetaRange = 1.8
+        topThetaRange = 2.8
 
         thetaMilliArcSeconds = np.arange(bottomThetaRange, topThetaRange, 0.001)
         thetaRadians = thetaMilliArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))
@@ -123,8 +123,8 @@ def uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spat
                 chiSquareValue = ((observed-expected)**2)/expected
                 if not np.isnan(chiSquareValue):
                     chiSquare += chiSquareValue
-                if chiSquare > 3:
-                    break
+                """if chiSquare > 3:
+                    break"""
                 j += 1
             print('Theta:', thetaRadians[i]/((1/1000)*(1/60)*(1/60)*(np.pi/180)), ', Chi Squared Value:', chiSquare)
             chiSquareValues.update({thetaRadians[i]/((1/1000)*(1/60)*(1/60)*(np.pi/180)): chiSquare})
@@ -137,9 +137,9 @@ def uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spat
             print("Expand theta range, stopping loop")
             break
 
-        with open('trialData.csv', 'a', newline='') as file: #Could open this less often, add every 5 trials for example, to speed it up
+        with open('uniformDiskFit.csv', 'a', newline='') as file: #Could open this less often, add every 5 trials for example, to speed it up
             writer = csv.writer(file)
-            writer.writerow([n, min(chiSquareValues)/((1/1000)*(1/60)*(1/60)*(np.pi/180)), min(chiSquareValues)])
+            writer.writerow([n, min(chiSquareValues), min(chiSquareValues)])
 
         n += 1
     #take the average of all the theta
@@ -293,12 +293,18 @@ def uniformDiskFitBootstrap(visibilitiesSquared, spatialFrequencies, numberOfTri
     return theta
 
 
+# table with spatial frequency, visibilities squared, expected, chi square
+
 #limb-darkened model angular diameter
 def limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, numberOfTrials):
     # Make CSV file to store trial results, that way even if code crashes, we have some results.
-    with open('trialData.csv', 'w', newline='') as csvfile:
+    with open('limbdarkened.csv', 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(['Trial', 'Angular Diameter', 'Alpha Value', 'Chi-Squared Value'])
+
+    """with open('chiSquare.csv', 'w', newline='') as fileOne:
+        writer = csv.writer(fileOne)
+        writer.writerow(['Theta', 'Alpha', 'Spatial Frequency', 'Visibilities Squared', 'Expected Value', 'Chi-Squared Value'])"""
 
     minChiSquareTestResults = []
     
@@ -306,24 +312,25 @@ def limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFr
         sampleVisibilitiesSquared = []
         minChiSquareTestResultForATrial = chiSquareTestResult(0,.5,1e10)
 
-
         for i in range(0, np.size(visibilitiesSquared)):
             randomVisibilitySquaredSample = random.gauss(visibilitiesSquared[i], visibilitiesSquaredErr[i])
             sampleVisibilitiesSquared.append(randomVisibilitySquaredSample)
 
         sampleVisibilitiesSquared = visibilitiesSquared
 
-        bottomThetaRange = 1.3
-        topThetaRange = 1.7
+        # calculate expected and put into an array. Don't need to recalculate each time.
+
+        bottomThetaRange = 1.6
+        topThetaRange = 2.6
         
         # Add another parameter V0, which varies from .95-1.05 (check if hits edge). expected = V0*(current function)
         
-        thetaMilliArcSeconds = np.arange(bottomThetaRange, topThetaRange, 0.05)
+        thetaMilliArcSeconds = np.arange(bottomThetaRange, topThetaRange, 0.01)
         thetaRadians = thetaMilliArcSeconds*((1/1000)*(1/60)*(1/60)*(np.pi/180))
 
         minChiSquareTestResultForATheta = chiSquareTestResult(0.0,.5,1e10)
 
-        bottomAlphaRange = 0.0
+        bottomAlphaRange = 0.00
         topAlphaRange = 0.4
 
         alpha = np.arange(bottomAlphaRange, topAlphaRange, 0.01)
@@ -335,18 +342,25 @@ def limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFr
                 k = 0
                 chiSquare = 0
                 while k < np.size(sampleVisibilitiesSquared):
-                    if(spatialFrequencies[k] < 150):
-                        observed = sampleVisibilitiesSquared[k]
-                        function = lambda r : ((1-r**2)**(alpha[j]/2))*j0(np.pi*thetaRadians[i]*r*spatialFrequencies[k]*1e6)*r
-                        integral, err = integrate.quad(function, 0, 1) #is quad an efficient function? Does python have more efficient integration?
-                        expected = ((alpha[j]+2)*integral)**2
-                        chiSquareValue = ((observed-expected)**2)/expected
-                        if not np.isnan(chiSquareValue):
-                            chiSquare += chiSquareValue
-                        #if(chiSquare > 5 or chiSquare > minChiSquareTestResultForATheta.chiSquare):
-                            #break
+                    #if(spatialFrequencies[k] < 160):
+                    observed = sampleVisibilitiesSquared[k]
+                    function = lambda r : ((1-r**2)**(alpha[j]/2))*j0(np.pi*thetaRadians[i]*r*spatialFrequencies[k]*1e6)*r
+                    integral, err = integrate.quad(function, 0, 1) 
+                    expected = ((alpha[j]+2)*integral)**2
+                    chiSquareValue = ((observed-expected)**2)/expected
+                    """with open('chiSquare.csv', 'a', newline='') as fileOne:
+                        writer = csv.writer(fileOne)
+                        writer.writerow([thetaRadians[i]/((1/1000)*(1/60)*(1/60)*(np.pi/180)) , alpha[j], spatialFrequencies[k], observed, expected, chiSquareValue])
+                    """
+                    if not np.isnan(chiSquareValue):
+                        chiSquare += chiSquareValue
+                    #if(chiSquare > 5 or chiSquare > minChiSquareTestResultForATheta.chiSquare):
+                        #break
                     k += 1
                 print("Theta value:", thetaRadians[i]/((1/1000)*(1/60)*(1/60)*(np.pi/180)), "alpha value:", alpha[j], "chisquare:", chiSquare)
+                with open('limbdarkened.csv', 'a', newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerow([n, thetaRadians[i]/((1/1000)*(1/60)*(1/60)*(np.pi/180)), alpha[j], chiSquare])
                 if (chiSquare < minChiSquareTestResultForATheta.chiSquare): #I compare every theta and alpha pair, is it more efficient to store them all and sort/compare at end to find min?
                     minChiSquareTestResultForATheta = chiSquareTestResult(thetaRadians[i], alpha[j], chiSquare)
                 j += 1
@@ -356,10 +370,10 @@ def limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFr
         print(minChiSquareTestResultForATrial)
         minChiSquareTestResults.append(minChiSquareTestResultForATrial)
 
-        with open('trialData.csv', 'a', newline='') as file:
+        """with open('limbdarkened.csv', 'a', newline='') as file:
             writer = csv.writer(file)
             writer.writerow([n, minChiSquareTestResultForATrial.angularDiameter/((1/1000)*(1/60)*(1/60)*(np.pi/180)), minChiSquareTestResultForATrial.alpha, minChiSquareTestResultForATrial.chiSquare])
-
+"""
         n += 1
 
     print('done')

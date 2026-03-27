@@ -7,165 +7,180 @@ import scipy.integrate as integrate
 import scipy.stats as stats
 import sympy as sp
 import random
-from oifitsTools import limbdarkenedThetaTest, uniformDiskFitBootstrap, uniformDiskFitErrorBarTest, uniformDiskFitErrorBarTestWithCenterVisibility
+from oifitsTools import openFile, limbdarkenedThetaTest, uniformDiskFitBootstrap, uniformDiskFitErrorBarTest, uniformDiskFitErrorBarTestWithCenterVisibility
 
 
-def flatten(ndarr): #assumes each row is of the same length
-    rows = len(ndarr)
-    cols = len(ndarr[0])
-    flatarr = []
-    for i in range(0,rows):
-        for j in range(0,cols):
-            flatarr.append(ndarr[i][j])
-    return flatarr
+visibilitiesSquaredSigGem, visibilitiesSquaredErrSigGem, spatialFrequenciesSigGem, spatialFrequenciesClosurePhasesSigGem,closurePhasesSigGem,closurePhasesErrSigGem = openFile('CHARADataSigGem/2011Dec07.17ms.sigGem.oifits')
 
-oifitsSigGem = oifits.open('CHARAData/2011Dec07.17ms.sigGem.oifits')
+visibilitiesSquaredCHARA, visibilitiesSquaredErrCHARA, spatialFrequenciesCHARA, spatialFrequenciesClosurePhasesCHARA, closurePhasesCHARA, closurePhasesErrCHARA = openFile('CHARADataPiOri/MIRC_L2.2025Sep21.pi03_Ori.MIRCX_IDL.RMR_deepedge.AVG5m.oifits')
 
-twoDVisibilitiesSigGem = []
-i = 0
-while i < np.size(oifitsSigGem.vis2):
-    twoDVisibilitiesSigGem.append(np.ma.getdata(oifitsSigGem.vis2[i].vis2data))
-    i += 1
+visibilitiesSquaredVLTI, visibilitiesSquaredErrVLTI, spatialFrequenciesVLTI, spatialFrequenciesClosurePhasesVLTI, closurePhasesVLTI, closurePhasesErrVLTI = openFile('VLTIDataPiOri/PIONI.2019-11-28T04-54-51.340_oidataCalibrated.fits')
+print(visibilitiesSquaredVLTI)
 
-twoDVisibilitiesErrorSigGem = []
-i = 0
-while i < np.size(oifitsSigGem.vis2):
-    twoDVisibilitiesErrorSigGem.append(np.ma.getdata(oifitsSigGem.vis2[i].vis2err))
-    i += 1
+print(len(visibilitiesSquaredVLTI))
 
-twoDClosurePhasesSigGem = []
-i = 0
-while i < np.size(oifitsSigGem.t3):
-    twoDClosurePhasesSigGem.append(np.ma.getdata(oifitsSigGem.t3[i].t3phi))
-    i += 1
+v, ve, sf, sfcp, cp, cpe = openFile('VLTIDataPiOri/PIONI.2019-11-28T05-13-08.623_oidataCalibrated.fits')
 
-twoDClosurePhasesErrorsSigGem = []
-i = 0
-while i < np.size(oifitsSigGem.t3):
-    twoDClosurePhasesErrorsSigGem.append(np.ma.getdata(oifitsSigGem.t3[i].t3phierr))
-    i += 1
+visibilitiesSquaredVLTI.extend(v)
+visibilitiesSquaredErrVLTI.extend(ve)
+spatialFrequenciesVLTI.extend(sf)
+spatialFrequenciesClosurePhasesVLTI.extend(sfcp)
+closurePhasesVLTI.extend(cp)
+closurePhasesErrVLTI.extend(cpe)
 
-twoDSpatialFrequencySigGem = []
-i = 0
-while i < np.size(oifitsSigGem.vis2):
-    twoDSpatialFrequencySigGem.append(np.sqrt((oifitsSigGem.vis2[i].ucoord)**2 + (oifitsSigGem.vis2[i].vcoord)**2)/oifitsSigGem.vis2[i].wavelength.eff_wave/1e6)
-    i += 1 
+v, ve, sf, sfcp, cp, cpe = openFile('VLTIDataPiOri/PIONI.2019-11-29T05-18-37.271_oidataCalibrated.fits')
+
+visibilitiesSquaredVLTI.extend(v)
+visibilitiesSquaredErrVLTI.extend(ve)
+spatialFrequenciesVLTI.extend(sf)
+spatialFrequenciesClosurePhasesVLTI.extend(sfcp)
+closurePhasesVLTI.extend(cp)
+closurePhasesErrVLTI.extend(cpe)
+
+v, ve, sf, sfcp, cp, cpe = openFile('VLTIDataPiOri/PIONI.2019-11-29T05-34-15.601_oidataCalibrated.fits')
+
+visibilitiesSquaredVLTI.extend(v)
+visibilitiesSquaredErrVLTI.extend(ve)
+spatialFrequenciesVLTI.extend(sf)
+spatialFrequenciesClosurePhasesVLTI.extend(sfcp)
+closurePhasesVLTI.extend(cp)
+closurePhasesErrVLTI.extend(cpe)
+
+v, ve, sf, sfcp, cp, cpe = openFile('VLTIDataPiOri/PIONIER.2011-09-27T08p16p19.858_oidataCalibrated.fits')
+
+visibilitiesSquaredVLTI.extend(v)
+visibilitiesSquaredErrVLTI.extend(ve)
+spatialFrequenciesVLTI.extend(sf)
+spatialFrequenciesClosurePhasesVLTI.extend(sfcp)
+closurePhasesVLTI.extend(cp)
+closurePhasesErrVLTI.extend(cpe)
+
+v, ve, sf, sfcp, cp, cpe = openFile('VLTIDataPiOri/PIONIER.2011-09-27T08p44p52.527_oidataCalibrated.fits')
+
+visibilitiesSquaredVLTI.extend(v)
+visibilitiesSquaredErrVLTI.extend(ve)
+spatialFrequenciesVLTI.extend(sf)
+spatialFrequenciesClosurePhasesVLTI.extend(sfcp)
+closurePhasesVLTI.extend(cp)
+closurePhasesErrVLTI.extend(cpe)
+
+v, ve, sf, sfcp, cp, cpe = openFile('VLTIDataPiOri/PIONIER.2011-09-27T09p12p58.922_oidataCalibrated.fits')
+
+visibilitiesSquaredVLTI.extend(v)
+visibilitiesSquaredErrVLTI.extend(ve)
+spatialFrequenciesVLTI.extend(sf)
+spatialFrequenciesClosurePhasesVLTI.extend(sfcp)
+closurePhasesVLTI.extend(cp)
+closurePhasesErrVLTI.extend(cpe)
+
+v, ve, sf, sfcp, cp, cpe = openFile('VLTIDataPiOri/PIONIER.2011-09-27T09p45p15.562_oidataCalibrated.fits')
+
+visibilitiesSquaredVLTI.extend(v)
+visibilitiesSquaredErrVLTI.extend(ve)
+spatialFrequenciesVLTI.extend(sf)
+spatialFrequenciesClosurePhasesVLTI.extend(sfcp)
+closurePhasesVLTI.extend(cp)
+closurePhasesErrVLTI.extend(cpe)
 
 
-twoDSpatialFrequencyClosurePhasesSigGem = []
-i = 0
-while i < np.size(oifitsSigGem.t3):
-    twoDSpatialFrequencyClosurePhasesSigGem.append(np.sqrt((oifitsSigGem.t3[i].u1coord)**2 + (oifitsSigGem.t3[i].v1coord)**2)/oifitsSigGem.t3[i].wavelength.eff_wave/1e6)
-    i += 1
-
-visibilitiesSquaredSigGem = flatten(twoDVisibilitiesSigGem)
-visibilitiesSquaredErrSigGem = flatten(twoDVisibilitiesErrorSigGem)
-spatialFrequenciesSigGem = flatten(twoDSpatialFrequencySigGem)
-spatialFrequenciesClosurePhasesSigGem = flatten(twoDSpatialFrequencyClosurePhasesSigGem)
-closurePhasesSigGem = flatten(twoDClosurePhasesSigGem)
-closurePhasesErrSigGem = flatten(twoDClosurePhasesErrorsSigGem)
-
-
-hdulist = fits.open('CHARADataPiOri/MIRC_L2.2025Sep21.pi03_Ori.MIRCX_IDL.RMR_deepedge.AVG5m.oifits')
-hdulist['OI_ARRAY'].header['OI_REVN'] = 1
-oifitsobj = oifits.open(hdulist)
-
-#To Do:
-#   check, Fit uniform disk theta, should get around 1. something milliarc seconds
-#        -with 100 trials using the error bar method, I received a theta of 1.4702000000000017 milliarc seconds
-#   Fit limb darkened theta
-#        -with 1 trial, angular diameter of 1.47 milliarc seconds and alpha of 0.01. One trial took 43 mins T-T. How can I make it more efficient????
-#   check, Graph visibilities
-#   Graph closure phases, why are there more closure phases than spatial frequencies?
-#   Conduct a literature review and compile a list of stellar parameters for pi03Ori
-#   Solve for my own parameters
-#   Figure out how to use Candid to look for a binary, keep good data about the results
-
-twoDVisibilities = []
-i = 0
-while i < np.size(oifitsobj.vis2):
-    twoDVisibilities.append(np.ma.getdata(oifitsobj.vis2[i].vis2data))
-    i += 1
-
-twoDVisibilitiesNotSquared = []
-i = 0
-while i < np.size(oifitsobj.vis):
-    twoDVisibilitiesNotSquared.append(np.ma.getdata(oifitsobj.vis[i].visamp))
-    i += 1
-
-twoDVisibilitiesError = []
-i = 0
-while i < np.size(oifitsobj.vis2):
-    twoDVisibilitiesError.append(np.ma.getdata(oifitsobj.vis2[i].vis2err))
-    i += 1
-
-twoDVisibilitiesNotSquaredErr = []
-i = 0
-while i < np.size(oifitsobj.vis):
-    twoDVisibilitiesNotSquaredErr.append(np.ma.getdata(oifitsobj.vis[i].visamperr))
-    i += 1
-
-twoDClosurePhases = []
-i = 0
-while i < np.size(oifitsobj.t3):
-    twoDClosurePhases.append(np.ma.getdata(oifitsobj.t3[i].t3phi))
-    i += 1
-
-twoDClosurePhasesErrors = []
-i = 0
-while i < np.size(oifitsobj.t3):
-    twoDClosurePhasesErrors.append(np.ma.getdata(oifitsobj.t3[i].t3phierr))
-    i += 1
-
-twoDSpatialFrequency = []
-i = 0
-while i < np.size(oifitsobj.vis2):
-    twoDSpatialFrequency.append(np.sqrt((oifitsobj.vis2[i].ucoord)**2 + (oifitsobj.vis2[i].vcoord)**2)/oifitsobj.vis2[i].wavelength.eff_wave/1e6)
-    i += 1
-
-twoDSpatialFrequencyClosurePhases = []
-i = 0
-while i < np.size(oifitsobj.t3):
-    twoDSpatialFrequencyClosurePhases.append(np.sqrt((oifitsobj.t3[i].u1coord)**2 + (oifitsobj.t3[i].v1coord)**2)/oifitsobj.t3[i].wavelength.eff_wave/1e6)
-    i += 1
-
-visibilitiesSquared = flatten(twoDVisibilities)
-print(len(visibilitiesSquared))
-visibilitiesSquaredErr = flatten(twoDVisibilitiesError)
-spatialFrequencies = flatten(twoDSpatialFrequency)
-print(len(spatialFrequencies))
-closurePhases = flatten(twoDClosurePhases)
-closurePhasesErr = flatten(twoDClosurePhasesErrors)
-spatialFrequenciesClosurePhases = flatten(twoDSpatialFrequencyClosurePhases)
-print(len(closurePhases))
-
-#uniformDiskTheta, uniformDiskError, chiSquareValues = uniformDiskFitErrorBarTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 10)
+#uniformDiskTheta, uniformDiskError, chiSquareValues = uniformDiskFitErrorBarTest(visibilitiesSquaredSigGem, visibilitiesSquaredErrSigGem, spatialFrequenciesSigGem, 1)
 #print("Uniform Disk Theta:", uniformDiskTheta, " Error:", uniformDiskError)
 
 #uniformDiskTheta, visibility = uniformDiskFitErrorBarTestWithCenterVisibility(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 3)
 #print("Uniform Disk Theta:", uniformDiskTheta, "Visibility", visibility)
 
-limbdarkenedTheta, alpha = limbdarkenedThetaTest(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 2)
-print("Limb darkened theta", limbdarkenedTheta/((1/1000)*(1/60)*(1/60)*(np.pi/180)))
-print("Limb darkened coefficient", alpha)
+#limbdarkenedTheta, alpha = limbdarkenedThetaTest(visibilitiesSquaredSigGem, visibilitiesSquaredErrSigGem, spatialFrequenciesSigGem, 1)
+#print("Limb darkened theta", limbdarkenedTheta/((1/1000)*(1/60)*(1/60)*(np.pi/180)))
+#print("Limb darkened coefficient", alpha)
 
-uniformDiskTheta = 1.485*((1/1000)*(1/60)*(1/60)*(np.pi/180)) 
-limbdarkenedTheta = 1.485*((1/1000)*(1/60)*(1/60)*(np.pi/180)) 
-alpha = 0.0
+uniformDiskTheta = 1.412*((1/1000)*(1/60)*(1/60)*(np.pi/180)) # VLTI results
+limbdarkenedTheta = 1.41*((1/1000)*(1/60)*(1/60)*(np.pi/180)) 
+alpha = 0
+
+# Sigma Gem Results
+#uniformDiskTheta = 2.256*((1/1000)*(1/60)*(1/60)*(np.pi/180))
+#limbdarkenedTheta = 2.26*((1/1000)*(1/60)*(1/60)*(np.pi/180)) 
+#alpha = 0.0
 
 x = np.arange(10, 225, .2) #for the visibility squared curve
 
-#Visibility Squared plot
-fig, ax = plt.subplots(2,1, sharex=True)
+fig, ax = plt.subplots(2,1, sharex=True, figsize=(11,8))
 print("about to plot")
-ax[0].errorbar(spatialFrequencies, visibilitiesSquared, yerr=visibilitiesSquaredErr, fmt = '.')
+
+# CHARA Data
+ax[0].errorbar(spatialFrequenciesCHARA, visibilitiesSquaredCHARA, yerr=visibilitiesSquaredErrCHARA, fmt = '.', color='grey')
 ax[1].set_xlabel('Spatial Frequency (Mλ)(baseline/wavelength)')
 ax[0].set_ylabel('Visibilities Squared')
 ax[0].set_yscale('log', base=10)
-
-#Closure Phases plot
-ax[1].errorbar(spatialFrequenciesClosurePhases, closurePhases, yerr=closurePhasesErr, fmt = '.')
+ax[1].errorbar(spatialFrequenciesClosurePhasesCHARA, closurePhasesCHARA, yerr=closurePhasesErrCHARA, fmt = '.')
 ax[1].set_ylabel('Closure Phases (degrees)')
+
+# VLTI Data
+ax[0].errorbar(spatialFrequenciesVLTI, visibilitiesSquaredVLTI, yerr=visibilitiesSquaredErrVLTI, fmt = '*')
+ax[0].set_yscale('log', base=10)
+ax[1].errorbar(spatialFrequenciesClosurePhasesVLTI, closurePhasesVLTI, yerr=closurePhasesErrVLTI, fmt = '*')
+
+#Plot models
+ax[0].plot( #uniform disk model
+    x, 
+    ((2*j1(np.pi*uniformDiskTheta*x*1e6))/(np.pi*uniformDiskTheta*x*1e6))**2, 
+    label='Uniform Disk Model',
+    color="red",
+    linewidth=2
+) 
+
+#uniform disk model
+limbDarkenedValues = []
+i = 0
+while i < np.size(x):
+    function = lambda r : ((1-r**2)**(alpha/2))*j0(np.pi*limbdarkenedTheta*r*x[i]*1e6)*r
+    integral, err = integrate.quad(function, 0, 1, epsabs=1e-14)
+    limbDarkenedValues.append(((alpha+2)*np.abs(integral))**2)
+    i+=1
+
+ax[0].plot(
+    x, 
+    limbDarkenedValues, 
+    label='Limb Darkened Model',
+    color="green",
+    linewidth=2
+)
+ax[0].legend()
+
+# Sigma Gem
+#ax[0].errorbar(spatialFrequenciesSigGem, visibilitiesSquaredSigGem, yerr=visibilitiesSquaredErrSigGem, fmt = '*')
+#ax[1].errorbar(spatialFrequenciesClosurePhasesSigGem, closurePhasesSigGem, yerr=closurePhasesErrSigGem, fmt = '*')
+
+# Define font sizes
+SIZE_DEFAULT = 17
+
+plt.rcParams["font.sans-serif"] = ["Arial", "DejaVu Sans"]
+plt.rcParams["font.family"] = "sans-serif"
+plt.rcParams["font.size"] = SIZE_DEFAULT
+plt.rcParams["axes.titlesize"] = SIZE_DEFAULT
+plt.rcParams["axes.labelsize"] = SIZE_DEFAULT
+plt.rcParams["xtick.labelsize"] = SIZE_DEFAULT
+plt.rcParams["ytick.labelsize"] = SIZE_DEFAULT
+
+plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.01, hspace=.05)
+plt.legend()
+plt.show()
+
+
+#uniform disk chisquared values plot
+"""chiSquareValuesList = list(chiSquareValues.values())
+i = 0
+while i < np.size(chiSquareValuesList):
+    if(chiSquareValuesList[i] > 500):
+        chiSquareValuesList[i] = np.nan
+    i += 1
+
+figThree, axThree = plt.subplots()
+
+axThree.plot(list(chiSquareValues.keys()), chiSquareValuesList)
+axThree.set_xlabel("Angular Diameter in Milliarcseconds")
+axThree.set_ylabel("Chi Squared Value")
+axThree.set_title("Uniform Disk Model Chi Squared Values")"""
 
 #Different alpha value plots
 """mew = np.arange(0, 1, .0001)
@@ -182,39 +197,3 @@ axTwo[1].set_xlabel('r')
 axTwo[0].set_ylabel('Intensity, I(r)')
 axTwo[1].set_ylabel('Intensity, I(r)')
 """
-#uniform disk chisquared values plot
-"""chiSquareValuesList = list(chiSquareValues.values())
-i = 0
-while i < np.size(chiSquareValuesList):
-    if(chiSquareValuesList[i] > 500):
-        chiSquareValuesList[i] = np.nan
-    i += 1
-
-figThree, axThree = plt.subplots()
-
-axThree.plot(list(chiSquareValues.keys()), chiSquareValuesList)
-axThree.set_xlabel("Angular Diameter in Milliarcseconds")
-axThree.set_ylabel("Chi Squared Value")
-axThree.set_title("Uniform Disk Model Chi Squared Values")"""
-
-#Plot models
-ax[0].plot(x, ((2*j1(np.pi*uniformDiskTheta*x*1e6))/(np.pi*uniformDiskTheta*x*1e6))**2, label='Uniform Disk Model') #uniform disk model
-
-limbDarkenedValues = []
-i = 0
-while i < np.size(x):
-    function = lambda r : ((1-r**2)**(alpha/2))*j0(np.pi*limbdarkenedTheta*r*x[i]*1e6)*r
-    integral, err = integrate.quad(function, 0, 1, epsabs=1e-14)
-    limbDarkenedValues.append(((alpha+2)*np.abs(integral))**2)
-    i+=1
-
-ax[0].plot(x, limbDarkenedValues, label='Limb Darkened Model')
-ax[0].legend()
-
-# Sigma Gem
-"""ax[0].errorbar(spatialFrequenciesSigGem, visibilitiesSquaredSigGem, yerr=visibilitiesSquaredErrSigGem, fmt = '*')
-
-ax[1].errorbar(spatialFrequenciesClosurePhasesSigGem, closurePhasesSigGem, yerr=closurePhasesErrSigGem, fmt = '*')"""
-
-plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.01, hspace=.085)
-plt.show()
