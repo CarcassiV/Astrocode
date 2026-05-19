@@ -97,7 +97,7 @@ ax[0].plot(
     limbDarkenedValues, 
     label='Limb Darkened Model',
     color="green",
-    ls = '-',
+    linestyle = '--',
     linewidth=3,
     zorder=3
 )

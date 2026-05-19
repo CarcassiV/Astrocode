@@ -8,7 +8,7 @@ import scipy.stats as stats
 import sympy as sp
 import random
 from oifitsTools import openFile, limbdarkenedThetaTest, uniformDiskFitBootstrap, uniformDiskFitErrorBarTest, uniformDiskFitErrorBarTestWithCenterVisibility
-
+import matplotlib as mpl
 
 visibilitiesSquaredSigGem, visibilitiesSquaredErrSigGem, spatialFrequenciesSigGem, spatialFrequenciesClosurePhasesSigGem,closurePhasesSigGem,closurePhasesErrSigGem = openFile('CHARADataSigGem/2011Dec07.17ms.sigGem.oifits')
 
@@ -83,50 +83,69 @@ closurePhasesVLTI.extend(cp)
 closurePhasesErrVLTI.extend(cpe)
 
 
-#uniformDiskTheta, uniformDiskError, chiSquareValues = uniformDiskFitErrorBarTest(visibilitiesSquaredSigGem, visibilitiesSquaredErrSigGem, spatialFrequenciesSigGem, 1)
+#uniformDiskTheta, uniformDiskError = uniformDiskFitErrorBarTestWithCenterVisibility(visibilitiesSquaredCHARA, visibilitiesSquaredErrCHARA, spatialFrequenciesCHARA, 1)
 #print("Uniform Disk Theta:", uniformDiskTheta, " Error:", uniformDiskError)
 
-#uniformDiskTheta, visibility = uniformDiskFitErrorBarTestWithCenterVisibility(visibilitiesSquared, visibilitiesSquaredErr, spatialFrequencies, 3)
+#uniformDiskTheta, visibility = uniformDiskFitErrorBarTestWithCenterVisibility(visibilitiesSquaredCHARA, visibilitiesSquaredErrCHARA, spatialFrequenciesCHARA, 1)
 #print("Uniform Disk Theta:", uniformDiskTheta, "Visibility", visibility)
 
-#limbdarkenedTheta, alpha = limbdarkenedThetaTest(visibilitiesSquaredSigGem, visibilitiesSquaredErrSigGem, spatialFrequenciesSigGem, 1)
+#limbdarkenedTheta, alpha = limbdarkenedThetaTest(visibilitiesSquaredCHARA, visibilitiesSquaredErrCHARA, spatialFrequenciesCHARA, 1)
 #print("Limb darkened theta", limbdarkenedTheta/((1/1000)*(1/60)*(1/60)*(np.pi/180)))
 #print("Limb darkened coefficient", alpha)
 
-uniformDiskTheta = 1.412*((1/1000)*(1/60)*(1/60)*(np.pi/180)) # VLTI results
+uniformDiskTheta = 1.485*((1/1000)*(1/60)*(1/60)*(np.pi/180)) # CHARA results, using temporary solution (setting low expected values to 10^-5)
+visibility = 1.01
+limbdarkenedTheta = 1.49*((1/1000)*(1/60)*(1/60)*(np.pi/180)) 
+alpha = 0.03
+
+"""uniformDiskTheta = 1.412*((1/1000)*(1/60)*(1/60)*(np.pi/180)) # VLTI results
 limbdarkenedTheta = 1.41*((1/1000)*(1/60)*(1/60)*(np.pi/180)) 
-alpha = 0
+alpha = 0"""
 
 # Sigma Gem Results
 #uniformDiskTheta = 2.256*((1/1000)*(1/60)*(1/60)*(np.pi/180))
 #limbdarkenedTheta = 2.26*((1/1000)*(1/60)*(1/60)*(np.pi/180)) 
 #alpha = 0.0
 
+# Define font sizes
+SIZE_DEFAULT = 28
+
+plt.rcParams["font.sans-serif"] = ["Arial", "DejaVu Sans"]
+plt.rcParams["font.family"] = "sans-serif"
+plt.rcParams["font.size"] = SIZE_DEFAULT
+plt.rcParams["axes.titlesize"] = SIZE_DEFAULT
+plt.rcParams["axes.labelsize"] = SIZE_DEFAULT
+plt.rcParams["xtick.labelsize"] = SIZE_DEFAULT
+plt.rcParams["ytick.labelsize"] = SIZE_DEFAULT
+
 x = np.arange(10, 225, .2) #for the visibility squared curve
 
-fig, ax = plt.subplots(2,1, sharex=True, figsize=(11,8))
+fig, ax = plt.subplots(2,1, sharex=True, figsize=(15,10))
 print("about to plot")
 
+ax[1].set_ylim(-200, 200)
+
 # CHARA Data
-ax[0].errorbar(spatialFrequenciesCHARA, visibilitiesSquaredCHARA, yerr=visibilitiesSquaredErrCHARA, fmt = '.', color='grey')
+ax[0].errorbar(spatialFrequenciesCHARA, visibilitiesSquaredCHARA, yerr=visibilitiesSquaredErrCHARA, fmt = '.', zorder=1)
 ax[1].set_xlabel('Spatial Frequency (Mλ)(baseline/wavelength)')
 ax[0].set_ylabel('Visibilities Squared')
 ax[0].set_yscale('log', base=10)
-ax[1].errorbar(spatialFrequenciesClosurePhasesCHARA, closurePhasesCHARA, yerr=closurePhasesErrCHARA, fmt = '.')
+ax[1].errorbar(spatialFrequenciesClosurePhasesCHARA, closurePhasesCHARA, yerr=closurePhasesErrCHARA, fmt = '.', zorder=1)
 ax[1].set_ylabel('Closure Phases (degrees)')
 
 # VLTI Data
-ax[0].errorbar(spatialFrequenciesVLTI, visibilitiesSquaredVLTI, yerr=visibilitiesSquaredErrVLTI, fmt = '*')
+"""ax[0].errorbar(spatialFrequenciesVLTI, visibilitiesSquaredVLTI, yerr=visibilitiesSquaredErrVLTI, fmt = '*', zorder = 1)
 ax[0].set_yscale('log', base=10)
-ax[1].errorbar(spatialFrequenciesClosurePhasesVLTI, closurePhasesVLTI, yerr=closurePhasesErrVLTI, fmt = '*')
+ax[1].errorbar(spatialFrequenciesClosurePhasesVLTI, closurePhasesVLTI, yerr=closurePhasesErrVLTI, fmt = '*', zorder = 1)"""
 
 #Plot models
 ax[0].plot( #uniform disk model
     x, 
     ((2*j1(np.pi*uniformDiskTheta*x*1e6))/(np.pi*uniformDiskTheta*x*1e6))**2, 
     label='Uniform Disk Model',
-    color="red",
-    linewidth=2
+    color = 'firebrick',
+    linewidth=3,
+    zorder=2
 ) 
 
 #uniform disk model
@@ -142,25 +161,16 @@ ax[0].plot(
     x, 
     limbDarkenedValues, 
     label='Limb Darkened Model',
-    color="green",
-    linewidth=2
+    color = '#ff796c',
+    ls = '--',
+    linewidth=3,
+    zorder=3
 )
 ax[0].legend()
 
 # Sigma Gem
 #ax[0].errorbar(spatialFrequenciesSigGem, visibilitiesSquaredSigGem, yerr=visibilitiesSquaredErrSigGem, fmt = '*')
 #ax[1].errorbar(spatialFrequenciesClosurePhasesSigGem, closurePhasesSigGem, yerr=closurePhasesErrSigGem, fmt = '*')
-
-# Define font sizes
-SIZE_DEFAULT = 17
-
-plt.rcParams["font.sans-serif"] = ["Arial", "DejaVu Sans"]
-plt.rcParams["font.family"] = "sans-serif"
-plt.rcParams["font.size"] = SIZE_DEFAULT
-plt.rcParams["axes.titlesize"] = SIZE_DEFAULT
-plt.rcParams["axes.labelsize"] = SIZE_DEFAULT
-plt.rcParams["xtick.labelsize"] = SIZE_DEFAULT
-plt.rcParams["ytick.labelsize"] = SIZE_DEFAULT
 
 plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.01, hspace=.05)
 plt.legend()
